@@ -2,6 +2,8 @@ use crate::error::error;
 use crate::token::Content;
 use crate::token::Token;
 use crate::token::TokenType;
+use std::mem::ManuallyDrop;
+use std::ptr::drop_in_place;
 
 struct Scanner {
     source: String,
@@ -13,40 +15,8 @@ struct Scanner {
 }
 
 impl Scanner {
-    fn new() -> Self {
-        Scanner {
-            source: "".to_string(),
-            tokens: Vec::<Token>::new(),
-
-            start: 0,
-            current: 0,
-            line: 1,
-        }
-    }
-
-    fn is_at_end(self) -> bool {
-        self.current >= self.source.len()
-    }
-
-    fn advance(mut self) -> char {
-        let c = self.source.chars().nth(self.current);
-        self.current = self.current + 1;
-        return c.unwrap();
-    }
-
-    fn add_token(mut self, token_type: TokenType) {
-        self.tokens.push(Token {
-            token_type,
-            lexeme: "".to_string(),
-            literal: Content {
-                null: std::ptr::null(),
-            },
-            line: self.line,
-        })
-    }
-
-    fn scan_tokens(mut self) -> Vec<Token> {
-        while !self.is_at_end() {
+    fn scan_tokens(&mut self) {
+        while !self.is_eof() {
             self.start = self.current;
             self.scan_token();
         }
@@ -59,40 +29,27 @@ impl Scanner {
             },
             line: self.line,
         });
-
-        self.tokens
     }
 
-    fn scan_token(mut self) {
-        let c: char = self.advance();
-        let token_type = match c {
+    fn scan_token(&mut self) {
+        let c: char = self.next();
+
+        // Longer tokens needs priority.
+        match c {
+            // Assignment
+            '+' if self.followed_by('=') => self.add_token(TokenType::PLUS_EQUAL),
+            '-' if self.followed_by('=') => self.add_token(TokenType::MINUS_EQUAL),
+            '*' if self.followed_by('=') => self.add_token(TokenType::STAR_EQUAL),
+            '/' if self.followed_by('=') => self.add_token(TokenType::SLASH_EQUAL),
+            '%' if self.followed_by('=') => self.add_token(TokenType::PERCENTAGE_EQUAL),
+
             // Math
-            '+' => self.add_token(if self.followed_by('=') {
-                TokenType::PLUS
-            } else {
-                TokenType::PLUS_EQUAL
-            }),
-            '-' => self.add_token(if self.followed_by('=') {
-                TokenType::MINUS
-            } else {
-                TokenType::MINUS_EQUAL
-            }),
-            '*' => self.add_token(if self.followed_by('=') {
-                TokenType::STAR
-            } else {
-                TokenType::STAR_EQUAL
-            }),
-            '/' => self.add_token(if self.followed_by('=') {
-                TokenType::SLASH
-            } else {
-                TokenType::SLASH_EQUAL
-            }),
-            '%' => self.add_token(if self.followed_by('=') {
-                TokenType::PERCENTAGE
-            } else {
-                TokenType::PERCENTAGE_EQUAL
-            }),
-            // '**' => add_token(STAR_STAR),
+            '*' if self.followed_by('*') => self.add_token(TokenType::STAR_STAR),
+            '+' => self.add_token(TokenType::PLUS),
+            '-' => self.add_token(TokenType::MINUS),
+            '*' => self.add_token(TokenType::STAR),
+            '/' => self.add_token(TokenType::SLASH),
+            '%' => self.add_token(TokenType::PERCENTAGE),
 
             // Open-close
             '(' => self.add_token(TokenType::PARENTHESIS_OPEN),
@@ -103,17 +60,11 @@ impl Scanner {
             '}' => self.add_token(TokenType::BRACE_CLOSE),
 
             ////////////////
-            '#' => {
-                self.add_token(TokenType::COMMENT);
-
-                while self.peek() != '\n' && !self.is_at_end() {
-                    // Comments should be recorded for future usage.
-                    self.advance();
-                }
-            }
+            '"' => self.add_string_token(),
+            '#' => self.add_comment_token(),
 
             // Special
-            '\n' => self.add_token(TokenType::NEWLINE),
+            '\n' => self.add_newline_token(),
             '\t' => self.add_token(TokenType::INDENT),
 
             // Ignored
@@ -124,43 +75,137 @@ impl Scanner {
         };
     }
 
-    fn followed_by(&self, c: char) -> bool {
-        if self.is_at_end() {
-            return false;
-        };
-        if self.source.chars().nth(self.current).unwrap() != c {
-            return false;
-        };
+    fn add_token(&mut self, token_type: TokenType) {
+        self.tokens.push(Token {
+            token_type,
+            lexeme: "".to_string(),
+            literal: Content {
+                null: std::ptr::null(),
+            },
+            line: self.line,
+        });
+    }
 
+    fn add_comment_token(&mut self) {
+        let string: String = self.consume_until('\n');
+
+        self.tokens.push(Token {
+            token_type: TokenType::COMMENT,
+            lexeme: "".to_string(),
+            literal: Content {
+                string: ManuallyDrop::new(string),
+            },
+            line: self.line,
+        });
+    }
+
+    fn add_string_token(&mut self) {
+        let chars: Vec<char> = vec!['"', '\n'];
+        let mut string: String = self.consume_until_one_of(&chars);
+        let mut last_char: char = string.chars().last().unwrap();
+
+        loop {
+            // Refuse multi-line strings.
+            if last_char != '"' {
+                error(self.line, "Unterminated string.".to_string())
+            }
+
+            // User is escaping quote.
+            if last_char == '\\' {
+                string.push(self.next());
+                string.push_str(self.consume_until_one_of(&chars).as_str());
+                last_char = string.chars().last().unwrap();
+
+                continue;
+            }
+
+            break;
+        }
+        self.next(); // Consume the closing quote.
+        self.tokens.push(Token {
+            token_type: TokenType::STRING,
+            lexeme: "".to_string(),
+            literal: Content {
+                string: ManuallyDrop::new(string),
+            },
+            line: self.line,
+        });
+    }
+
+    fn add_newline_token(&mut self) {
+        self.add_token(TokenType::NEWLINE);
+        self.line += 1;
+    }
+
+    /*********************************************/
+    /****************** Utility ******************/
+    /*********************************************/
+
+    fn is_eof(&self) -> bool {
+        self.current >= self.source.len()
+    }
+
+    fn next(&mut self) -> char {
+        let character = self.source.chars().nth(self.current).unwrap();
         self.current += 1;
-
-        true
+        character
     }
 
-    fn peek(self) -> char {
-        if self.is_at_end() {
-            return '\0';
-        };
-
-        self.source.chars().nth(self.current).unwrap()
+    fn followed_by(&mut self, c: char) -> bool {
+        if self.is_eof() {
+            false
+        } else if self.source.chars().nth(self.current).unwrap() != c {
+            false
+        } else {
+            self.current += 1;
+            true
+        }
     }
 
-    fn string(mut self) {
-        while self.peek() != '"' && !self.is_at_end() {
-            if self.peek() == '\n' {
-                self.line += 1
+    fn is_next(&self, c: char) -> bool {
+        !self.is_eof() && self.source.chars().nth(self.current).unwrap() == c
+    }
+
+    fn consume_until(&mut self, c: char) -> String {
+        let mut string: String = "".to_string();
+
+        while self.is_next(c) && !self.is_eof() {
+            if self.is_next('\n') {
+                self.add_newline_token()
             };
-            self.advance();
+
+            string.push(self.next());
         }
 
-        if self.is_at_end() {
-            error(self.line, "Unterminated string.".to_string());
-            return;
+        if self.is_eof() {
+            error(self.line, "Unterminated string.".to_string())
         }
 
-        self.advance();
+        string
+    }
 
-        // let value: String = self.source.chars();
-        // self.add_token(TokenType::STRING, value);
+    fn consume_until_one_of(&mut self, chars: &Vec<char>) -> String {
+        let mut string: String = "".to_string();
+
+        while self.is_next_one_of(&chars) && !self.is_eof() {
+            if self.is_next('\n') {
+                self.add_newline_token()
+            };
+
+            string.push(self.next());
+        }
+
+        if self.is_eof() {
+            error(self.line, "Unterminated string.".to_string())
+        }
+
+        string
+    }
+
+    fn is_next_one_of(&mut self, chars: &Vec<char>) -> bool {
+        match chars.into_iter().find(|&&c| self.is_next(c)) {
+            Some(_) => true,
+            _ => false,
+        }
     }
 }
