@@ -1,0 +1,10 @@
+# Comparassion
+
+| Token | Description |
+| --- | --- |
+| > | |
+| < | |
+| == | |
+| != | |
+| >= | |
+| <= | |
