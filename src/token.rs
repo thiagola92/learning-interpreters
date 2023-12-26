@@ -40,7 +40,6 @@ pub enum TokenType {
     RETURN,
     PASS,
     AWAIT,
-    ELSE_IF,
     ELSE,
     BREAK,
     CONTINUE,
@@ -61,6 +60,11 @@ pub enum TokenType {
     PUBLIC,
     EXTENDS,
     FROM,
+
+    // Deisgn pattern
+    IN,
+    WHEN,
+    AT_SIGN,
 
     // Literal
     TRUE,
@@ -98,6 +102,11 @@ pub enum TokenType {
     BRACE_OPEN,
     BRACE_CLOSE,
 
+    // Scope
+    NEWLINE,
+    INDENT,
+    DEDENT,
+
     // Test
     BREAKPOINT,
     ASSERT,
@@ -110,16 +119,11 @@ pub enum TokenType {
     CHAR,
     STR,
 
-    // Deisgn pattern
-    IN,
-    WHEN,
-    AT_SIGN,
-
-    ////////////////
+    // TODO: Classify
     WHERE,
     COMMENT,
     DOLLAR,
-    PERIODO,
+    PERIOD,
     COMMA,
     COLON,
     SEMICOLON,
@@ -131,9 +135,6 @@ pub enum TokenType {
 
     // Special
     IDENTIFIER, // Name of variables, classes, functions, etc
-    NEWLINE,
-    INDENT,
-    DEDENT,
     EOF,
 }
 
@@ -149,24 +150,26 @@ pub union Content {
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,
-    pub literal: Content,
+    pub content: Content,
     pub line: usize,
 }
 
 impl Token {
     pub fn to_string(&self) -> String {
-        let token_type = &self.token_type;
-        let lexeme = &self.lexeme;
-        let literal = &self.literal;
+        let t = &self.token_type;
+        let l = &self.lexeme;
+        let c = &self.content;
 
-        match token_type {
-            TRUE => format!("{:#?} {} true", token_type, lexeme),
-            FALSE => format!("{:#?} {} false", token_type, lexeme),
-            INTEGER => format!("{:#?} {} {}", token_type, lexeme, literal.integer),
-            FLOATING => format!("{:#?} {} {}", token_type, lexeme, literal.floating),
-            CHARACTER => format!("{:#?} {} {}", token_type, lexeme, literal.character),
-            STRING => format!("{:#?} {} {:#?}", token_type, lexeme, literal.string),
-            _ => format!("{:#?} {}", token_type, lexeme),
+        unsafe {
+            match t {
+                TokenType::TRUE => format!("{:#?} {} true", t, l),
+                TokenType::FALSE => format!("{:#?} {} false", t, l),
+                TokenType::INTEGER => format!("{:#?} {} {}", t, l, c.integer),
+                TokenType::FLOATING => format!("{:#?} {} {}", t, l, c.floating),
+                TokenType::CHARACTER => format!("{:#?} {} {}", t, l, c.character),
+                TokenType::STRING => format!("{:#?} {} {:#?}", t, l, c.string),
+                _ => format!("{:#?} {}", t, l),
+            }
         }
     }
 }
