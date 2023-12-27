@@ -1,4 +1,9 @@
 use crate::error::error;
+use crate::error::UNFINISHED_CHARACTER;
+use crate::error::UNFINISHED_COMMENT;
+use crate::error::UNFINISHED_STRING;
+use crate::error::UNKNOW_CHAR;
+use crate::error::WRONG_CHAR_SIZE;
 use crate::token::Content;
 use crate::token::Token;
 use crate::token::TokenType;
@@ -200,7 +205,7 @@ impl Scanner {
                 } else if self.is_alpha(c) {
                     self.add_identifier_token(c)
                 } else {
-                    error(self.line, "Unexpected character.".to_string())
+                    error(self.line, UNKNOW_CHAR)
                 }
             }
         };
@@ -218,7 +223,7 @@ impl Scanner {
     }
 
     fn add_comment_token(&mut self) {
-        let string: String = self.consume_until('\n');
+        let string: String = self.consume_until('\n', UNFINISHED_COMMENT, false);
 
         self.tokens.push(Token {
             token_type: TokenType::Comment,
@@ -232,28 +237,17 @@ impl Scanner {
 
     fn add_string_token(&mut self) {
         let chars: Vec<char> = vec!['"', '\n'];
-        let mut string: String = self.consume_until_one_of(&chars);
-        let mut last_char: char = string.chars().last().unwrap();
+        let string: String = self.consume_until_one_of(&chars, UNFINISHED_STRING, true);
 
-        loop {
-            // Refuse multi-line strings.
-            if self.peek() != '"' {
-                error(self.line, "Unterminated string.".to_string());
-                return;
-            }
-
-            // User didn't escape last quote.
-            if last_char != '\\' {
-                break;
-            }
-
-            // TODO: convert to true character with slash in front.
-            string.push(self.next());
-            string.push_str(self.consume_until_one_of(&chars).as_str());
-            last_char = string.chars().last().unwrap();
+        // Refuse multi-line strings.
+        if self.peek() != '"' {
+            error(self.line, UNFINISHED_STRING);
+            return;
         }
 
-        self.next(); // Consume the closing quote.
+        // Consume the closing quote.
+        self.next();
+
         self.tokens.push(Token {
             token_type: TokenType::String,
             lexeme: "".to_string(),
@@ -265,44 +259,30 @@ impl Scanner {
     }
 
     fn add_character_token(&mut self) {
-        if self.is_eof() {
-            error(self.line, "Unterminated character.".to_string());
-            return;
-        }
-
-        let mut c: char = self.next();
-
-        if self.is_eof() {
-            error(self.line, "Unterminated character.".to_string());
-            return;
-        }
-
-        // User is escaping.
-        if c == '\\' {
-            c = self.next();
-
-            // TODO: convert to true character with slash in front.
-            self.tokens.push(Token {
-                token_type: TokenType::Character,
-                lexeme: "".to_string(),
-                content: Content { character: c },
-                line: self.line,
-            });
-        } else {
-            self.tokens.push(Token {
-                token_type: TokenType::Character,
-                lexeme: "".to_string(),
-                content: Content { character: c },
-                line: self.line,
-            });
-        }
+        let chars: Vec<char> = vec!['\'', '\n'];
+        let string: String = self.consume_until_one_of(&chars, UNFINISHED_CHARACTER, true);
 
         if self.peek() != '\'' {
-            error(self.line, "Unterminated character.".to_string());
+            error(self.line, UNFINISHED_CHARACTER);
             return;
         }
 
-        self.next(); // Consume closing quote.
+        // Consume the closing quote.
+        self.next();
+
+        if string.chars().count() != 1 {
+            error(self.line, WRONG_CHAR_SIZE);
+            return;
+        }
+
+        self.tokens.push(Token {
+            token_type: TokenType::Character,
+            lexeme: "".to_string(),
+            content: Content {
+                character: string.chars().nth(0).unwrap(),
+            },
+            line: self.line,
+        });
     }
 
     fn add_number_token(&mut self, c: char) {
@@ -396,12 +376,8 @@ impl Scanner {
         self.is_digit(c) || self.is_alpha(c)
     }
 
-    fn is_next(&self, c: char) -> bool {
-        !self.is_eof() && self.source.chars().nth(self.current).unwrap() == c
-    }
-
     fn is_next_one_of(&mut self, chars: &Vec<char>) -> bool {
-        match chars.into_iter().find(|&&c| self.is_next(c)) {
+        match chars.into_iter().find(|&&c| self.peek() == c) {
             Some(_) => true,
             _ => false,
         }
@@ -432,7 +408,7 @@ impl Scanner {
     }
 
     fn next(&mut self) -> char {
-        let character = self.source.chars().nth(self.current).unwrap();
+        let character: char = self.source.chars().nth(self.current).unwrap();
         self.current += 1;
         character
     }
@@ -453,39 +429,85 @@ impl Scanner {
         }
     }
 
-    fn consume_until(&mut self, c: char) -> String {
+    fn consume_until(&mut self, c: char, msg: &str, escape: bool) -> String {
         let mut string: String = "".to_string();
 
-        while !self.is_next(c) && !self.is_eof() {
-            if self.is_next('\n') {
+        while self.peek() != c {
+            if self.is_eof() {
+                error(self.line, &msg);
+                break;
+            }
+
+            if self.peek() == '\n' {
                 self.add_newline_token()
             };
 
-            string.push(self.next());
-        }
-
-        if self.is_eof() {
-            error(self.line, "Unterminated string.".to_string());
+            if escape && self.peek() == '\\' {
+                string.push(self.escape());
+            } else {
+                string.push(self.next());
+            }
         }
 
         string
     }
 
-    fn consume_until_one_of(&mut self, chars: &Vec<char>) -> String {
+    fn consume_until_one_of(&mut self, chars: &Vec<char>, msg: &str, escape: bool) -> String {
         let mut string: String = "".to_string();
 
-        while !self.is_next_one_of(&chars) && !self.is_eof() {
-            if self.is_next('\n') {
+        while !self.is_next_one_of(&chars) {
+            if self.is_eof() {
+                error(self.line, &msg);
+                break;
+            }
+
+            if self.peek() == '\n' {
                 self.add_newline_token()
             };
 
-            string.push(self.next());
-        }
-
-        if self.is_eof() {
-            error(self.line, "Unterminated string.".to_string());
+            if escape && self.peek() == '\\' {
+                string.push(self.escape());
+            } else {
+                string.push(self.next());
+            }
         }
 
         string
+    }
+
+    fn escape(&mut self) -> char {
+        // Current char is backslash, next one can be an special char.
+        // In this case you have to skip 2 characters.
+        match self.peek_next() {
+            '0' => {
+                self.current += 2;
+                '\0'
+            }
+            'n' => {
+                self.current += 2;
+                '\n'
+            }
+            'r' => {
+                self.current += 2;
+                '\r'
+            }
+            't' => {
+                self.current += 2;
+                '\t'
+            }
+            '\\' => {
+                self.current += 2;
+                '\\'
+            }
+            '"' => {
+                self.current += 2;
+                '"'
+            }
+            '\'' => {
+                self.current += 2;
+                '\''
+            }
+            _ => self.next(),
+        }
     }
 }

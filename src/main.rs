@@ -43,7 +43,7 @@ fn run_file(filename: String) {
 
         // Found an error in the code.
         unsafe {
-            if error::HAS_ERROR {
+            if error::HAD_ERROR {
                 process::exit(65);
             }
         }
@@ -68,7 +68,7 @@ fn run_prompt() {
 
         // Interactive mode shouldn't stop when error occurs.
         unsafe {
-            error::HAS_ERROR = false;
+            error::HAD_ERROR = false;
         }
     }
 }
