@@ -1,141 +1,140 @@
 use std::mem::ManuallyDrop;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum TokenType {
     // Assignment
-    EQUAL,
-    PLUS_EQUAL,
-    MINUS_EQUAL,
-    STAR_EQUAL,
-    SLASH_EQUAL,
-    PERCENTAGE_EQUAL,
-    STAR_STAR_EQUAL,
-    AMPERSAND_EQUAL,
-    PIPE_EQUAL,
-    CARET_EQUAL,
-    GREATER_GREATER_EQUAL,
-    LESS_LESS_EQUAL,
+    Equal,
+    PlusEqual,
+    MinusEqual,
+    StarEqual,
+    SlashEqual,
+    PercentageEqual,
+    StarStarEqual,
+    AmpersandEqual,
+    PipeEqual,
+    CaretEqual,
+    GreaterGreaterEqual,
+    LessLessEqual,
 
     // Bitwise
-    AMPERSAND,
-    PIPE,
-    CARET,
-    GREATER_GREATER,
-    LESS_LESS,
+    Ampersand,
+    Pipe,
+    Caret,
+    GreaterGreater,
+    LessLess,
 
     // Comparassion
-    GREATER,
-    LESS,
-    EQUAL_EQUAL,
-    NOT_EQUAL,
-    GREATER_EQUAL,
-    LESS_EQUAL,
+    Greater,
+    Less,
+    EqualEqual,
+    NotEqual,
+    GreaterEqual,
+    LessEqual,
 
     // Control Flow
-    IF,
-    MATCH,
-    LOOP,
-    WHILE,
-    FOR,
-    RETURN,
-    PASS,
-    AWAIT,
-    ELSE,
-    BREAK,
-    CONTINUE,
+    If,
+    Match,
+    Loop,
+    While,
+    For,
+    Return,
+    Pass,
+    Await,
+    Else,
+    Break,
+    Continue,
 
     // Definition
-    VAR,
-    CONST,
-    ENUM,
-    SIGNAL,
-    FUNC,
-    PROC,
-    STRUCT,
-    CLASS,
-    CONSTRUCTOR,
-    DESTRUCTOR,
-    IMPORT,
-    STATIC,
-    PUBLIC,
-    EXTENDS,
-    FROM,
+    Var,
+    Const,
+    Enum,
+    Signal,
+    Func,
+    Proc,
+    Struct,
+    Class,
+    Constructor,
+    Destructor,
+    Import,
+    Static,
+    Public,
+    Extends,
+    From,
 
     // Deisgn pattern
-    IN,
-    WHEN,
-    AT_SIGN,
+    In,
+    When,
+    AtSign,
 
     // Literal
-    TRUE,
-    FALSE,
-    INTEGER,
-    FLOATING,
-    CHARACTER,
-    STRING,
-    NULL,
+    True,
+    False,
+    Integer,
+    Floating,
+    Character,
+    String,
+    Null,
 
     // Logical
-    NOT,
-    AND,
-    OR,
+    Not,
+    And,
+    Or,
 
     // Math
-    PLUS,
-    MINUS,
-    STAR,
-    SLASH,
-    PERCENTAGE,
-    STAR_STAR,
+    Plus,
+    Minus,
+    Star,
+    Slash,
+    Percentage,
+    StarStar,
 
     // Object-oriented
-    SELF,
-    SUPER,
-    IS,
-    AS,
+    Self_,
+    Super,
+    Is,
+    As,
 
     // Open close
-    PARENTHESIS_OPEN,
-    PARENTHESIS_CLOSE,
-    BRACKET_OPEN,
-    BRACKET_CLOSE,
-    BRACE_OPEN,
-    BRACE_CLOSE,
+    ParenthesisOpen,
+    ParenthesisClose,
+    BracketOpen,
+    BracketClose,
+    BraceOpen,
+    BraceClose,
 
     // Scope
-    NEWLINE,
-    INDENT,
-    DEDENT,
+    Newline,
+    Indent,
 
     // Test
-    BREAKPOINT,
-    ASSERT,
-    TEST,
+    Breakpoint,
+    Assert,
+    Test,
 
     // Type
-    BOOL,
-    INT,
-    FLOAT,
-    CHAR,
-    STR,
+    Bool,
+    Int,
+    Float,
+    Char,
+    Str,
 
     // TODO: Classify
-    WHERE,
-    COMMENT,
-    DOLLAR,
-    PERIOD,
-    COMMA,
-    COLON,
-    SEMICOLON,
-    EXCLAMATION_MARK,
-    QUESTION_MARK,
-    UNDERSCORE,
-    PERIOD_PERIOD,
-    FORWARD_ARROW,
+    Where,
+    Comment,
+    Dollar,
+    Period,
+    Comma,
+    Colon,
+    Semicolon,
+    Underscore,
+    ExclamationMark,
+    QuestionMark,
+    PeriodPeriod,
+    ForwardArrow,
 
     // Special
-    IDENTIFIER, // Name of variables, classes, functions, etc
-    EOF,
+    Identifier, // Name of variables, classes, functions, etc
+    Eof,
 }
 
 pub union Content {
@@ -156,18 +155,18 @@ pub struct Token {
 
 impl Token {
     pub fn to_string(&self) -> String {
-        let t = &self.token_type;
+        let t = self.token_type;
         let l = &self.lexeme;
         let c = &self.content;
 
         unsafe {
             match t {
-                TokenType::TRUE => format!("{:#?} {} true", t, l),
-                TokenType::FALSE => format!("{:#?} {} false", t, l),
-                TokenType::INTEGER => format!("{:#?} {} {}", t, l, c.integer),
-                TokenType::FLOATING => format!("{:#?} {} {}", t, l, c.floating),
-                TokenType::CHARACTER => format!("{:#?} {} {}", t, l, c.character),
-                TokenType::STRING => format!("{:#?} {} {:#?}", t, l, c.string),
+                TokenType::True => format!("{:#?} {}", t, l),
+                TokenType::False => format!("{:#?} {}", t, l),
+                TokenType::Integer => format!("{:#?} {} {}", t, l, c.integer),
+                TokenType::Floating => format!("{:#?} {} {}", t, l, c.floating),
+                TokenType::Character => format!("{:#?} {} {}", t, l, c.character),
+                TokenType::String => format!("{:#?} {} {:#?}", t, l, c.string),
                 _ => format!("{:#?} {}", t, l),
             }
         }

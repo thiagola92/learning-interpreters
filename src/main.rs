@@ -2,6 +2,7 @@ mod error;
 mod scanner;
 mod token;
 
+use scanner::Scanner;
 use std::env;
 use std::fs::File;
 use std::io;
@@ -9,6 +10,7 @@ use std::io::BufRead;
 use std::io::BufReader;
 use std::io::Write;
 use std::process;
+use token::Token;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -72,9 +74,10 @@ fn run_prompt() {
 }
 
 fn run(code: String) {
-    let parts: Vec<&str> = code.split(" ").collect();
+    let scanner = Scanner::new(code);
+    let tokens: Vec<Token> = scanner.scan_tokens();
 
-    for p in parts {
-        println!("{}", p);
+    for t in tokens {
+        println!("{}", t.to_string());
     }
 }
