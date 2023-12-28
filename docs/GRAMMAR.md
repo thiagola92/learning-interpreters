@@ -12,5 +12,5 @@ binary -> expression operator expression;
 
 operator -> "==" | "!=" | "<=" | "=>" | "<" | ">"
             | "+" | "-" | "*" | "/" | "%" | "**"
-            | "and" | "or
+            | "and" | "or"
             | "&" | "|" | "^" | ">>" | "<<"

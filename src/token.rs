@@ -165,9 +165,9 @@ pub struct Token {
 
 impl Token {
     pub fn to_string(&self) -> String {
-        let t = self.token_type;
-        let l = &self.lexeme;
-        let c = &self.content;
+        let t: TokenType = self.token_type;
+        let l: &String = &self.lexeme;
+        let c: &Content = &self.content;
 
         unsafe {
             match t {
