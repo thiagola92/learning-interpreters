@@ -60,13 +60,13 @@ impl Scanner {
                 ("destructor".to_string(), TokenType::Destructor),
                 ("interface".to_string(), TokenType::Interface),
                 ("import".to_string(), TokenType::Import),
+                ("as".to_string(), TokenType::As),
                 // Definition Modifier
                 ("static".to_string(), TokenType::Static),
                 ("public".to_string(), TokenType::Public),
                 ("extends".to_string(), TokenType::Extends),
                 ("implements".to_string(), TokenType::Implements),
                 ("from".to_string(), TokenType::From),
-                ("as".to_string(), TokenType::As),
                 // Deisgn pattern
                 ("in".to_string(), TokenType::In),
                 ("when".to_string(), TokenType::When),

@@ -61,6 +61,7 @@ pub enum TokenType {
     Destructor,
     Interface,
     Import,
+    As,
 
     // Definition Modifier
     Static,
@@ -68,7 +69,6 @@ pub enum TokenType {
     Extends,
     Implements,
     From,
-    As,
 
     // Deisgn Pattern
     In,
