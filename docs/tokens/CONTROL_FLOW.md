@@ -10,6 +10,7 @@
 | return | |
 | pass | |
 | await | |
+| emit | |
 
 # Modifiers
 

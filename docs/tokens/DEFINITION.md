@@ -21,4 +21,6 @@
 | static | Make variable/constant static |
 | public | Make variable/constant/enum/signal/func/proc/struct/class/constructor public |
 | extends | Make a class extend functionality from other class |
+| implements | Make a class implement methods from interface |
 | from | Make import look at specific path |
+| as | Define a variable |

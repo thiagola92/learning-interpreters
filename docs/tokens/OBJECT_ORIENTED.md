@@ -4,5 +4,5 @@
 | --- | --- |
 | self | |
 | super | |
-| is | |
-| as | |
+| is | Check if instance is from object |
+| to | Convert value to another type |

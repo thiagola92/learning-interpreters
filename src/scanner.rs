@@ -41,6 +41,8 @@ impl Scanner {
                 ("return".to_string(), TokenType::Return),
                 ("pass".to_string(), TokenType::Pass),
                 ("await".to_string(), TokenType::Await),
+                ("emit".to_string(), TokenType::Emit),
+                // Control Flow Modifier
                 ("else".to_string(), TokenType::Else),
                 ("break".to_string(), TokenType::Break),
                 ("continue".to_string(), TokenType::Continue),
@@ -52,14 +54,19 @@ impl Scanner {
                 ("func".to_string(), TokenType::Func),
                 ("proc".to_string(), TokenType::Proc),
                 ("struct".to_string(), TokenType::Struct),
+                ("union".to_string(), TokenType::Union),
                 ("class".to_string(), TokenType::Class),
                 ("constructor".to_string(), TokenType::Constructor),
                 ("destructor".to_string(), TokenType::Destructor),
+                ("interface".to_string(), TokenType::Interface),
                 ("import".to_string(), TokenType::Import),
+                // Definition Modifier
                 ("static".to_string(), TokenType::Static),
                 ("public".to_string(), TokenType::Public),
                 ("extends".to_string(), TokenType::Extends),
+                ("implements".to_string(), TokenType::Implements),
                 ("from".to_string(), TokenType::From),
+                ("as".to_string(), TokenType::As),
                 // Deisgn pattern
                 ("in".to_string(), TokenType::In),
                 ("when".to_string(), TokenType::When),
@@ -75,7 +82,7 @@ impl Scanner {
                 ("self".to_string(), TokenType::Self_),
                 ("super".to_string(), TokenType::Super),
                 ("is".to_string(), TokenType::Is),
-                ("as".to_string(), TokenType::As),
+                ("to".to_string(), TokenType::To),
                 // Test
                 ("breakpoint".to_string(), TokenType::Breakpoint),
                 ("assert".to_string(), TokenType::Assert),
@@ -88,6 +95,7 @@ impl Scanner {
                 ("str".to_string(), TokenType::Str),
                 // TODO: Classify
                 ("where".to_string(), TokenType::Where),
+                ("with".to_string(), TokenType::With),
             ]),
         }
     }

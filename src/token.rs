@@ -40,6 +40,9 @@ pub enum TokenType {
     Return,
     Pass,
     Await,
+    Emit,
+
+    // Control Flow Modifier
     Else,
     Break,
     Continue,
@@ -52,16 +55,22 @@ pub enum TokenType {
     Func,
     Proc,
     Struct,
+    Union,
     Class,
     Constructor,
     Destructor,
+    Interface,
     Import,
+
+    // Definition Modifier
     Static,
     Public,
     Extends,
+    Implements,
     From,
+    As,
 
-    // Deisgn pattern
+    // Deisgn Pattern
     In,
     When,
     AtSign,
@@ -88,13 +97,13 @@ pub enum TokenType {
     Percentage,
     StarStar,
 
-    // Object-oriented
+    // Object-Oriented
     Self_,
     Super,
     Is,
-    As,
+    To,
 
-    // Open close
+    // Open Close
     ParenthesisOpen,
     ParenthesisClose,
     BracketOpen,
@@ -120,6 +129,7 @@ pub enum TokenType {
 
     // TODO: Classify
     Where,
+    With,
     Comment,
     Dollar,
     Period,
