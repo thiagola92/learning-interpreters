@@ -47,8 +47,10 @@
 | for | |
 | return | |
 | pass | |
-| await | |
-| emit | |
+| emit | Emit a signal |
+| await | Await a signal |
+| yield | Yield a coroutine |
+| resume | Resume a coroutine |
 
 ## Modifiers
 
@@ -70,10 +72,12 @@
 | proc | Defines a procedure |
 | struct | Defines a struct |
 | class | Defines a class |
+| singleton | Defines a singleton |
+| interface | Defines an interface |
 | constructor | Defines a constructor |
 | destructor | Defines a destructor |
 | import | Define an import |
-| as | Define a variable and evalute to variable |
+| as | Define a variable and evalute to it |
 
 ## Modifiers
 

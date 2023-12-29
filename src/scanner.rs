@@ -1,12 +1,8 @@
-use crate::error::error;
-use crate::error::UNFINISHED_CHARACTER;
-use crate::error::UNFINISHED_COMMENT;
-use crate::error::UNFINISHED_STRING;
-use crate::error::UNKNOW_CHAR;
-use crate::error::WRONG_CHAR_SIZE;
-use crate::token::Content;
-use crate::token::Token;
-use crate::token::TokenType;
+use crate::error::{
+    error, UNFINISHED_CHARACTER, UNFINISHED_COMMENT, UNFINISHED_STRING, UNKNOW_CHAR,
+    WRONG_CHAR_SIZE,
+};
+use crate::token::{Content, Token, TokenType};
 use std::collections::HashMap;
 use std::mem::ManuallyDrop;
 
@@ -40,8 +36,10 @@ impl Scanner {
                 ("for".to_string(), TokenType::For),
                 ("return".to_string(), TokenType::Return),
                 ("pass".to_string(), TokenType::Pass),
-                ("await".to_string(), TokenType::Await),
                 ("emit".to_string(), TokenType::Emit),
+                ("await".to_string(), TokenType::Await),
+                ("yield".to_string(), TokenType::Yield),
+                ("resume".to_string(), TokenType::Resume),
                 // Control Flow Modifier
                 ("else".to_string(), TokenType::Else),
                 ("break".to_string(), TokenType::Break),
@@ -56,6 +54,7 @@ impl Scanner {
                 ("struct".to_string(), TokenType::Struct),
                 ("union".to_string(), TokenType::Union),
                 ("class".to_string(), TokenType::Class),
+                ("singleton".to_string(), TokenType::Singleton),
                 ("constructor".to_string(), TokenType::Constructor),
                 ("destructor".to_string(), TokenType::Destructor),
                 ("interface".to_string(), TokenType::Interface),

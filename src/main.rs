@@ -1,5 +1,6 @@
 mod error;
 mod expression;
+mod parser;
 mod scanner;
 mod token;
 
@@ -7,15 +8,13 @@ use scanner::Scanner;
 use std::env;
 use std::fs::File;
 use std::io;
-use std::io::BufRead;
-use std::io::BufReader;
-use std::io::Write;
+use std::io::{BufRead, BufReader, Write};
 use std::process;
 use token::Token;
 
 fn main() {
+    expression::fast_test();
     let args: Vec<String> = env::args().collect();
-    dbg!(&args);
 
     if args.len() > 2 {
         println!("Usage: seth [file]");

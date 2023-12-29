@@ -1,6 +1,7 @@
 use std::mem::ManuallyDrop;
+use std::ptr::null;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TokenType {
     // Assignment
     Equal,
@@ -39,8 +40,10 @@ pub enum TokenType {
     For,
     Return,
     Pass,
-    Await,
     Emit,
+    Await,
+    Yield,
+    Resume,
 
     // Control Flow Modifier
     Else,
@@ -57,6 +60,7 @@ pub enum TokenType {
     Struct,
     Union,
     Class,
+    Singleton,
     Constructor,
     Destructor,
     Interface,
@@ -147,6 +151,7 @@ pub enum TokenType {
     Eof,
 }
 
+// https://doc.rust-lang.org/stable/std/mem/struct.ManuallyDrop.html
 pub union Content {
     pub boolean: bool,
     pub integer: i32,
@@ -165,20 +170,58 @@ pub struct Token {
 
 impl Token {
     pub fn to_string(&self) -> String {
-        let t: TokenType = self.token_type;
-        let l: &String = &self.lexeme;
-        let c: &Content = &self.content;
+        format!(
+            "{:#?} {} {}",
+            self.token_type,
+            self.lexeme,
+            self.content_to_string()
+        )
+    }
+
+    pub fn content_to_string(&self) -> String {
+        unsafe {
+            match self.token_type {
+                TokenType::True => "true".to_string(),
+                TokenType::False => "false".to_string(),
+                TokenType::Integer => self.content.integer.to_string(),
+                TokenType::Floating => self.content.floating.to_string(),
+                TokenType::Character => self.content.character.to_string(),
+                TokenType::String => self.content.string.to_string(),
+                TokenType::Null => "null".to_string(),
+                _ => "".to_string(),
+            }
+        }
+    }
+
+    pub fn clone(&self) -> Token {
+        let content: Content;
 
         unsafe {
-            match t {
-                TokenType::True => format!("{:#?} {}", t, l),
-                TokenType::False => format!("{:#?} {}", t, l),
-                TokenType::Integer => format!("{:#?} {} {}", t, l, c.integer),
-                TokenType::Floating => format!("{:#?} {} {}", t, l, c.floating),
-                TokenType::Character => format!("{:#?} {} {}", t, l, c.character),
-                TokenType::String => format!("{:#?} {} {:#?}", t, l, c.string),
-                _ => format!("{:#?} {}", t, l),
-            }
+            content = match self.token_type {
+                TokenType::True => Content { boolean: true },
+                TokenType::False => Content { boolean: false },
+                TokenType::Integer => Content {
+                    integer: self.content.integer,
+                },
+                TokenType::Floating => Content {
+                    floating: self.content.floating,
+                },
+                TokenType::Character => Content {
+                    character: self.content.character,
+                },
+                TokenType::String => Content {
+                    string: self.content.string.clone(),
+                },
+                TokenType::Null => Content { null: null() },
+                _ => Content { null: null() },
+            };
+        }
+
+        Token {
+            token_type: self.token_type,
+            lexeme: self.lexeme.clone(),
+            content,
+            line: self.line,
         }
     }
 }
