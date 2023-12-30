@@ -4,6 +4,8 @@ mod parser;
 mod scanner;
 mod token;
 
+use expression::Expression;
+use parser::Parser;
 use scanner::Scanner;
 use std::env;
 use std::fs::File;
@@ -13,7 +15,6 @@ use std::process;
 use token::Token;
 
 fn main() {
-    expression::fast_test();
     let args: Vec<String> = env::args().collect();
 
     if args.len() > 2 {
@@ -74,10 +75,21 @@ fn run_prompt() {
 }
 
 fn run(code: String) {
-    let scanner = Scanner::new(code);
+    let scanner: Scanner = Scanner::new(code);
     let tokens: Vec<Token> = scanner.scan_tokens();
+    let mut parser: Parser = Parser::new(tokens);
+    let exp: Option<Expression> = parser.parse();
 
-    for t in tokens {
-        println!("{}", t.to_string());
+    unsafe {
+        if error::HAD_ERROR == true {
+            return;
+        }
     }
+
+    let expression: Expression = exp.unwrap();
+
+    println!(
+        "{}",
+        expression::parentesize_expression("".to_string(), vec![expression])
+    );
 }
