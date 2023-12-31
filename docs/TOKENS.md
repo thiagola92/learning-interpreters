@@ -10,7 +10,7 @@
 | %= | |
 | **= | |
 | &= | |
-| |= | |
+| \|= | |
 | ^= | |
 | >>= | |
 | <<= | |
@@ -20,8 +20,9 @@
 | Token | Description |
 | --- | --- |
 | & | Bitwise and |
-| | | Bitwise or |
+| \| | Bitwise or |
 | ^ | Bitwise xor |
+| ~ | Bitwise not |
 | >> | Bitwise shift to right |
 | << | Bitwise shift to left |
 
@@ -45,11 +46,11 @@
 | loop | |
 | while | |
 | for | |
-| return | |
-| pass | |
+| return | Return from function |
+| pass | Does nothing |
 | emit | Emit a signal |
 | await | Await a signal |
-| yield | Yield a coroutine |
+| yield | Yield coroutine value |
 | resume | Resume a coroutine |
 
 ## Modifiers
@@ -57,7 +58,7 @@
 | Token | Description |
 | --- | --- |
 | else | In case previous condition is false, enter next scope/if |
-| break | Exit loop |
+| break | Exit loop/while/for |
 | continue | Go to next loop iteration |
 
 # Definition
@@ -69,13 +70,15 @@
 | enum | Defines an enum |
 | signal | Defines a signal |
 | func | Defines a function |
-| proc | Defines a procedure |
+| coroutine | Defines a coroutine |
 | struct | Defines a struct |
 | class | Defines a class |
 | singleton | Defines a singleton |
 | interface | Defines an interface |
 | constructor | Defines a constructor |
 | destructor | Defines a destructor |
+| set | Define a function that set variable value |
+| get | Define a function that get variable/constant value |
 | import | Define an import |
 | as | Define a variable and evalute to it |
 

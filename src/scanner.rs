@@ -50,14 +50,16 @@ impl Scanner {
                 ("enum".to_string(), TokenType::Enum),
                 ("signal".to_string(), TokenType::Signal),
                 ("func".to_string(), TokenType::Func),
-                ("proc".to_string(), TokenType::Proc),
+                ("coroutine".to_string(), TokenType::Coroutine),
                 ("struct".to_string(), TokenType::Struct),
                 ("union".to_string(), TokenType::Union),
                 ("class".to_string(), TokenType::Class),
                 ("singleton".to_string(), TokenType::Singleton),
+                ("interface".to_string(), TokenType::Interface),
                 ("constructor".to_string(), TokenType::Constructor),
                 ("destructor".to_string(), TokenType::Destructor),
-                ("interface".to_string(), TokenType::Interface),
+                ("set".to_string(), TokenType::Set),
+                ("get".to_string(), TokenType::Get),
                 ("import".to_string(), TokenType::Import),
                 ("as".to_string(), TokenType::As),
                 // Definition Modifier
@@ -137,6 +139,7 @@ impl Scanner {
             '&' if self.is_followed_by('=') => self.add_token(TokenType::AmpersandEqual),
             '|' if self.is_followed_by('=') => self.add_token(TokenType::PipeEqual),
             '^' if self.is_followed_by('=') => self.add_token(TokenType::CaretEqual),
+            '~' if self.is_followed_by('=') => self.add_token(TokenType::Tilde),
 
             // Bitwise
             '>' if self.is_followed_by('>') => self.add_token(TokenType::GreaterGreater),

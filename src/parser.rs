@@ -72,7 +72,7 @@ impl Parser {
             _ => return Err(()),
         };
 
-        while self.any(vec![Plus, Minus]) {
+        while self.any(vec![Plus, Minus, Ampersand, Pipe, Caret]) {
             exp = match self.factorization() {
                 Ok(e) => Expression::Binary {
                     left: Box::new(exp),
@@ -92,7 +92,7 @@ impl Parser {
             _ => return Err(()),
         };
 
-        while self.any(vec![Star, Slash]) {
+        while self.any(vec![Star, Slash, GreaterGreater, LessLess]) {
             exp = match self.unary() {
                 Ok(e) => Expression::Binary {
                     left: Box::new(exp),
@@ -107,7 +107,7 @@ impl Parser {
     }
 
     fn unary(&mut self) -> Result<Expression, ()> {
-        if self.any(vec![Not, Minus]) {
+        if self.any(vec![Not, Minus, Tilde]) {
             match self.unary() {
                 Ok(e) => Ok(Expression::Unary {
                     token: self.previous().clone(),

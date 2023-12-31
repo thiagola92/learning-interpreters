@@ -21,6 +21,7 @@ pub enum TokenType {
     Ampersand,
     Pipe,
     Caret,
+    Tilde,
     GreaterGreater,
     LessLess,
 
@@ -56,14 +57,16 @@ pub enum TokenType {
     Enum,
     Signal,
     Func,
-    Proc,
+    Coroutine,
     Struct,
     Union,
     Class,
     Singleton,
+    Interface,
     Constructor,
     Destructor,
-    Interface,
+    Set,
+    Get,
     Import,
     As,
 
@@ -169,14 +172,14 @@ pub struct Token {
 }
 
 impl Token {
-    pub fn to_string(&self) -> String {
-        format!(
-            "{:#?} {} {}",
-            self.token_type,
-            self.lexeme,
-            self.content_to_string()
-        )
-    }
+    // pub fn to_string(&self) -> String {
+    //     format!(
+    //         "{:#?} {} {}",
+    //         self.token_type,
+    //         self.lexeme,
+    //         self.content_to_string()
+    //     )
+    // }
 
     pub fn content_to_string(&self) -> String {
         unsafe {
