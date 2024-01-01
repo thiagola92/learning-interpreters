@@ -2,9 +2,8 @@ use crate::error::{
     error, UNFINISHED_CHARACTER, UNFINISHED_COMMENT, UNFINISHED_STRING, UNKNOW_CHAR,
     WRONG_CHAR_SIZE,
 };
-use crate::token::{Content, Token, TokenType};
+use crate::token::{Content, Token, TokenType, TokenType::*};
 use std::collections::HashMap;
-use std::mem::ManuallyDrop;
 
 pub struct Scanner {
     source: String,
@@ -29,74 +28,74 @@ impl Scanner {
 
             keywords: HashMap::from([
                 // Control Flow
-                ("if".to_string(), TokenType::If),
-                ("match".to_string(), TokenType::Match),
-                ("loop".to_string(), TokenType::Loop),
-                ("while".to_string(), TokenType::While),
-                ("for".to_string(), TokenType::For),
-                ("return".to_string(), TokenType::Return),
-                ("pass".to_string(), TokenType::Pass),
-                ("emit".to_string(), TokenType::Emit),
-                ("await".to_string(), TokenType::Await),
-                ("yield".to_string(), TokenType::Yield),
-                ("resume".to_string(), TokenType::Resume),
+                ("if".to_string(), If),
+                ("match".to_string(), Match),
+                ("loop".to_string(), Loop),
+                ("while".to_string(), While),
+                ("for".to_string(), For),
+                ("return".to_string(), Return),
+                ("pass".to_string(), Pass),
+                ("emit".to_string(), Emit),
+                ("await".to_string(), Await),
+                ("yield".to_string(), Yield),
+                ("resume".to_string(), Resume),
                 // Control Flow Modifier
-                ("else".to_string(), TokenType::Else),
-                ("break".to_string(), TokenType::Break),
-                ("continue".to_string(), TokenType::Continue),
+                ("else".to_string(), Else),
+                ("break".to_string(), Break),
+                ("continue".to_string(), Continue),
                 // Definition
-                ("var".to_string(), TokenType::Var),
-                ("const".to_string(), TokenType::Const),
-                ("enum".to_string(), TokenType::Enum),
-                ("signal".to_string(), TokenType::Signal),
-                ("func".to_string(), TokenType::Func),
-                ("coroutine".to_string(), TokenType::Coroutine),
-                ("struct".to_string(), TokenType::Struct),
-                ("union".to_string(), TokenType::Union),
-                ("class".to_string(), TokenType::Class),
-                ("singleton".to_string(), TokenType::Singleton),
-                ("interface".to_string(), TokenType::Interface),
-                ("constructor".to_string(), TokenType::Constructor),
-                ("destructor".to_string(), TokenType::Destructor),
-                ("set".to_string(), TokenType::Set),
-                ("get".to_string(), TokenType::Get),
-                ("import".to_string(), TokenType::Import),
-                ("as".to_string(), TokenType::As),
+                ("var".to_string(), Var),
+                ("const".to_string(), Const),
+                ("enum".to_string(), Enum),
+                ("signal".to_string(), Signal),
+                ("func".to_string(), Func),
+                ("coroutine".to_string(), Coroutine),
+                ("struct".to_string(), Struct),
+                ("union".to_string(), Union),
+                ("class".to_string(), Class),
+                ("singleton".to_string(), Singleton),
+                ("interface".to_string(), Interface),
+                ("constructor".to_string(), Constructor),
+                ("destructor".to_string(), Destructor),
+                ("set".to_string(), Set),
+                ("get".to_string(), Get),
+                ("import".to_string(), Import),
+                ("as".to_string(), As),
                 // Definition Modifier
-                ("static".to_string(), TokenType::Static),
-                ("public".to_string(), TokenType::Public),
-                ("extends".to_string(), TokenType::Extends),
-                ("implements".to_string(), TokenType::Implements),
-                ("from".to_string(), TokenType::From),
+                ("static".to_string(), Static),
+                ("public".to_string(), Public),
+                ("extends".to_string(), Extends),
+                ("implements".to_string(), Implements),
+                ("from".to_string(), From),
                 // Deisgn pattern
-                ("in".to_string(), TokenType::In),
-                ("when".to_string(), TokenType::When),
+                ("in".to_string(), In),
+                ("when".to_string(), When),
                 // Literal
-                ("true".to_string(), TokenType::True),
-                ("false".to_string(), TokenType::False),
-                ("null".to_string(), TokenType::Null),
+                ("true".to_string(), True),
+                ("false".to_string(), False),
+                ("null".to_string(), Null),
                 // Logical
-                ("not".to_string(), TokenType::Not),
-                ("and".to_string(), TokenType::And),
-                ("or".to_string(), TokenType::Or),
+                ("not".to_string(), Not),
+                ("and".to_string(), And),
+                ("or".to_string(), Or),
                 // Object-oriented
-                ("self".to_string(), TokenType::Self_),
-                ("super".to_string(), TokenType::Super),
-                ("is".to_string(), TokenType::Is),
-                ("to".to_string(), TokenType::To),
+                ("self".to_string(), Self_),
+                ("super".to_string(), Super),
+                ("is".to_string(), Is),
+                ("to".to_string(), To),
                 // Test
-                ("breakpoint".to_string(), TokenType::Breakpoint),
-                ("assert".to_string(), TokenType::Assert),
-                ("test".to_string(), TokenType::Test),
+                ("breakpoint".to_string(), Breakpoint),
+                ("assert".to_string(), Assert),
+                ("test".to_string(), Test),
                 // Type
-                ("bool".to_string(), TokenType::Bool),
-                ("int".to_string(), TokenType::Int),
-                ("float".to_string(), TokenType::Float),
-                ("char".to_string(), TokenType::Char),
-                ("str".to_string(), TokenType::Str),
+                ("bool".to_string(), Bool),
+                ("int".to_string(), Int),
+                ("float".to_string(), Float),
+                ("char".to_string(), Char),
+                ("str".to_string(), Str),
                 // TODO: Classify
-                ("where".to_string(), TokenType::Where),
-                ("with".to_string(), TokenType::With),
+                ("where".to_string(), Where),
+                ("with".to_string(), With),
             ]),
         }
     }
@@ -108,11 +107,9 @@ impl Scanner {
         }
 
         self.tokens.push(Token {
-            token_type: TokenType::Eof,
+            token_type: Eof,
             lexeme: "".to_string(),
-            content: Content {
-                null: std::ptr::null(),
-            },
+            content: Content::Null,
             line: self.line,
         });
 
@@ -124,86 +121,84 @@ impl Scanner {
 
         match c {
             // Assignment
-            '>' if self.is_followed_by_both('>', '=') => {
-                self.add_token(TokenType::GreaterGreaterEqual)
-            }
-            '<' if self.is_followed_by_both('<', '=') => self.add_token(TokenType::LessLessEqual),
-            '*' if self.is_followed_by_both('*', '=') => self.add_token(TokenType::StarStarEqual),
+            '>' if self.is_followed_by_both('>', '=') => self.add_token(GreaterGreaterEqual),
+            '<' if self.is_followed_by_both('<', '=') => self.add_token(LessLessEqual),
+            '*' if self.is_followed_by_both('*', '=') => self.add_token(StarStarEqual),
 
             // Assignment
-            '+' if self.is_followed_by('=') => self.add_token(TokenType::PlusEqual),
-            '-' if self.is_followed_by('=') => self.add_token(TokenType::MinusEqual),
-            '*' if self.is_followed_by('=') => self.add_token(TokenType::StarEqual),
-            '/' if self.is_followed_by('=') => self.add_token(TokenType::SlashEqual),
-            '%' if self.is_followed_by('=') => self.add_token(TokenType::PercentageEqual),
-            '&' if self.is_followed_by('=') => self.add_token(TokenType::AmpersandEqual),
-            '|' if self.is_followed_by('=') => self.add_token(TokenType::PipeEqual),
-            '^' if self.is_followed_by('=') => self.add_token(TokenType::CaretEqual),
-            '~' if self.is_followed_by('=') => self.add_token(TokenType::Tilde),
+            '+' if self.is_followed_by('=') => self.add_token(PlusEqual),
+            '-' if self.is_followed_by('=') => self.add_token(MinusEqual),
+            '*' if self.is_followed_by('=') => self.add_token(StarEqual),
+            '/' if self.is_followed_by('=') => self.add_token(SlashEqual),
+            '%' if self.is_followed_by('=') => self.add_token(PercentageEqual),
+            '&' if self.is_followed_by('=') => self.add_token(AmpersandEqual),
+            '|' if self.is_followed_by('=') => self.add_token(PipeEqual),
+            '^' if self.is_followed_by('=') => self.add_token(CaretEqual),
+            '~' if self.is_followed_by('=') => self.add_token(Tilde),
 
             // Bitwise
-            '>' if self.is_followed_by('>') => self.add_token(TokenType::GreaterGreater),
-            '<' if self.is_followed_by('<') => self.add_token(TokenType::LessLess),
+            '>' if self.is_followed_by('>') => self.add_token(GreaterGreater),
+            '<' if self.is_followed_by('<') => self.add_token(LessLess),
 
             // Comparassion
-            '=' if self.is_followed_by('=') => self.add_token(TokenType::EqualEqual),
-            '!' if self.is_followed_by('=') => self.add_token(TokenType::NotEqual),
-            '>' if self.is_followed_by('=') => self.add_token(TokenType::GreaterEqual),
-            '<' if self.is_followed_by('=') => self.add_token(TokenType::LessEqual),
+            '=' if self.is_followed_by('=') => self.add_token(EqualEqual),
+            '!' if self.is_followed_by('=') => self.add_token(NotEqual),
+            '>' if self.is_followed_by('=') => self.add_token(GreaterEqual),
+            '<' if self.is_followed_by('=') => self.add_token(LessEqual),
 
             // Math
-            '*' if self.is_followed_by('*') => self.add_token(TokenType::StarStar),
+            '*' if self.is_followed_by('*') => self.add_token(StarStar),
 
             // TODO: Classify
-            '.' if self.is_followed_by('>') => self.add_token(TokenType::PeriodPeriod),
-            '-' if self.is_followed_by('>') => self.add_token(TokenType::ForwardArrow),
+            '.' if self.is_followed_by('>') => self.add_token(PeriodPeriod),
+            '-' if self.is_followed_by('>') => self.add_token(ForwardArrow),
 
             // Assignment
-            '=' => self.add_token(TokenType::Equal),
+            '=' => self.add_token(Equal),
 
             // Bitwise
-            '&' => self.add_token(TokenType::Ampersand),
-            '|' => self.add_token(TokenType::Pipe),
-            '^' => self.add_token(TokenType::Caret),
+            '&' => self.add_token(Ampersand),
+            '|' => self.add_token(Pipe),
+            '^' => self.add_token(Caret),
 
             // Design pattern
-            '@' => self.add_token(TokenType::AtSign),
+            '@' => self.add_token(AtSign),
 
             // Comparassion
-            '>' => self.add_token(TokenType::Greater),
-            '<' => self.add_token(TokenType::Less),
+            '>' => self.add_token(Greater),
+            '<' => self.add_token(Less),
 
             // Math
-            '+' => self.add_token(TokenType::Plus),
-            '-' => self.add_token(TokenType::Minus),
-            '*' => self.add_token(TokenType::Star),
-            '/' => self.add_token(TokenType::Slash),
-            '%' => self.add_token(TokenType::Percentage),
+            '+' => self.add_token(Plus),
+            '-' => self.add_token(Minus),
+            '*' => self.add_token(Star),
+            '/' => self.add_token(Slash),
+            '%' => self.add_token(Percentage),
 
             // Open-close
-            '(' => self.add_token(TokenType::ParenthesisOpen),
-            ')' => self.add_token(TokenType::ParenthesisClose),
-            '[' => self.add_token(TokenType::BracketOpen),
-            ']' => self.add_token(TokenType::BracketClose),
-            '{' => self.add_token(TokenType::BraceOpen),
-            '}' => self.add_token(TokenType::BraceClose),
+            '(' => self.add_token(ParenthesisOpen),
+            ')' => self.add_token(ParenthesisClose),
+            '[' => self.add_token(BracketOpen),
+            ']' => self.add_token(BracketClose),
+            '{' => self.add_token(BraceOpen),
+            '}' => self.add_token(BraceClose),
 
             // Scope
             '\n' => self.add_newline_token(),
-            '\t' => self.add_token(TokenType::Indent),
+            '\t' => self.add_token(Indent),
 
             // TODO: Classify
             '\'' => self.add_character_token(),
             '"' => self.add_string_token(),
             '#' => self.add_comment_token(),
-            '$' => self.add_token(TokenType::Dollar),
-            '.' => self.add_token(TokenType::Period),
-            ',' => self.add_token(TokenType::Comma),
-            ':' => self.add_token(TokenType::Colon),
-            ';' => self.add_token(TokenType::Semicolon),
-            '!' => self.add_token(TokenType::ExclamationMark),
-            '?' => self.add_token(TokenType::QuestionMark),
-            '_' => self.add_token(TokenType::Underscore),
+            '$' => self.add_token(Dollar),
+            '.' => self.add_token(Period),
+            ',' => self.add_token(Comma),
+            ':' => self.add_token(Colon),
+            ';' => self.add_token(Semicolon),
+            '!' => self.add_token(ExclamationMark),
+            '?' => self.add_token(QuestionMark),
+            '_' => self.add_token(Underscore),
 
             // Ignored
             ' ' => (),
@@ -225,9 +220,7 @@ impl Scanner {
         self.tokens.push(Token {
             token_type,
             lexeme: "".to_string(),
-            content: Content {
-                null: std::ptr::null(),
-            },
+            content: Content::Null,
             line: self.line,
         });
     }
@@ -236,11 +229,9 @@ impl Scanner {
         let string: String = self.consume_until('\n', UNFINISHED_COMMENT, false);
 
         self.tokens.push(Token {
-            token_type: TokenType::Comment,
+            token_type: Comment,
             lexeme: "".to_string(),
-            content: Content {
-                string: ManuallyDrop::new(string),
-            },
+            content: Content::String(string),
             line: self.line,
         });
     }
@@ -259,11 +250,9 @@ impl Scanner {
         self.next();
 
         self.tokens.push(Token {
-            token_type: TokenType::String,
+            token_type: String_,
             lexeme: "".to_string(),
-            content: Content {
-                string: ManuallyDrop::new(string),
-            },
+            content: Content::String(string),
             line: self.line,
         });
     }
@@ -286,11 +275,9 @@ impl Scanner {
         }
 
         self.tokens.push(Token {
-            token_type: TokenType::Character,
+            token_type: Character,
             lexeme: "".to_string(),
-            content: Content {
-                character: string.chars().nth(0).unwrap(),
-            },
+            content: Content::Character(string.chars().nth(0).unwrap()),
             line: self.line,
         });
     }
@@ -311,20 +298,16 @@ impl Scanner {
             }
 
             self.tokens.push(Token {
-                token_type: TokenType::Floating,
+                token_type: Floating,
                 lexeme: "".to_string(),
-                content: Content {
-                    floating: string.parse::<f32>().unwrap(),
-                },
+                content: Content::Floating(string.parse::<f32>().unwrap()),
                 line: self.line,
             });
         } else {
             self.tokens.push(Token {
-                token_type: TokenType::Integer,
+                token_type: Integer,
                 lexeme: "".to_string(),
-                content: Content {
-                    integer: string.parse::<i32>().unwrap(),
-                },
+                content: Content::Integer(string.parse::<i32>().unwrap()),
                 line: self.line,
             });
         }
@@ -342,19 +325,19 @@ impl Scanner {
                 self.tokens.push(Token {
                     token_type,
                     lexeme: "".to_string(),
-                    content: Content {
-                        null: std::ptr::null(),
+                    content: match token_type {
+                        True => Content::Boolean(true),
+                        False => Content::Boolean(false),
+                        _ => Content::Null,
                     },
                     line: self.line,
                 });
             }
             _ => {
                 self.tokens.push(Token {
-                    token_type: TokenType::Identifier,
+                    token_type: Identifier,
                     lexeme: "".to_string(),
-                    content: Content {
-                        string: ManuallyDrop::new(string),
-                    },
+                    content: Content::String(string),
                     line: self.line,
                 });
             }
@@ -362,7 +345,7 @@ impl Scanner {
     }
 
     fn add_newline_token(&mut self) {
-        self.add_token(TokenType::Newline);
+        self.add_token(Newline);
         self.line += 1;
     }
 

@@ -122,10 +122,10 @@ impl Parser {
 
     fn primary(&mut self) -> Result<Expression, ()> {
         if self.any(vec![
-            True, False, Integer, Floating, Character, String, Null,
+            True, False, Integer, Floating, Character, String_, Null,
         ]) {
             return Ok(Expression::Literal {
-                token: self.previous().clone(),
+                content: self.previous().content.clone(),
             });
         }
 
@@ -173,7 +173,7 @@ impl Parser {
 
         while !self.is_eof() {
             match self.peek().token_type {
-                Var | Const | Enum | Signal | Func | Proc | Struct | Class | Singleton
+                Var | Const | Enum | Signal | Func | Coroutine | Struct | Class | Singleton
                 | Interface | Constructor | Destructor | Import | When | AtSign | Assert | Test
                 | Breakpoint => return,
                 _ => self.next(),

@@ -1,6 +1,3 @@
-use std::mem::ManuallyDrop;
-use std::ptr::null;
-
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TokenType {
     // Assignment
@@ -88,7 +85,7 @@ pub enum TokenType {
     Integer,
     Floating,
     Character,
-    String,
+    String_, // Escape conflict with String
     Null,
 
     // Logical
@@ -105,7 +102,7 @@ pub enum TokenType {
     StarStar,
 
     // Object-Oriented
-    Self_,
+    Self_, // Escape conflict with Self
     Super,
     Is,
     To,
@@ -154,16 +151,17 @@ pub enum TokenType {
     Eof,
 }
 
-// https://doc.rust-lang.org/stable/std/mem/struct.ManuallyDrop.html
-pub union Content {
-    pub boolean: bool,
-    pub integer: i32,
-    pub floating: f32,
-    pub character: char,
-    pub string: ManuallyDrop<String>,
-    pub null: *const i32,
+#[derive(Clone)]
+pub enum Content {
+    Boolean(bool),
+    Integer(i32),
+    Floating(f32),
+    Character(char),
+    String(String),
+    Null,
 }
 
+#[derive(Clone)]
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,
@@ -171,60 +169,15 @@ pub struct Token {
     pub line: usize,
 }
 
-impl Token {
-    // pub fn to_string(&self) -> String {
-    //     format!(
-    //         "{:#?} {} {}",
-    //         self.token_type,
-    //         self.lexeme,
-    //         self.content_to_string()
-    //     )
-    // }
-
-    pub fn content_to_string(&self) -> String {
-        unsafe {
-            match self.token_type {
-                TokenType::True => "true".to_string(),
-                TokenType::False => "false".to_string(),
-                TokenType::Integer => self.content.integer.to_string(),
-                TokenType::Floating => self.content.floating.to_string(),
-                TokenType::Character => self.content.character.to_string(),
-                TokenType::String => self.content.string.to_string(),
-                TokenType::Null => "null".to_string(),
-                _ => "".to_string(),
-            }
-        }
-    }
-
-    pub fn clone(&self) -> Token {
-        let content: Content;
-
-        unsafe {
-            content = match self.token_type {
-                TokenType::True => Content { boolean: true },
-                TokenType::False => Content { boolean: false },
-                TokenType::Integer => Content {
-                    integer: self.content.integer,
-                },
-                TokenType::Floating => Content {
-                    floating: self.content.floating,
-                },
-                TokenType::Character => Content {
-                    character: self.content.character,
-                },
-                TokenType::String => Content {
-                    string: self.content.string.clone(),
-                },
-                TokenType::Null => Content { null: null() },
-                _ => Content { null: null() },
-            };
-        }
-
-        Token {
-            token_type: self.token_type,
-            lexeme: self.lexeme.clone(),
-            content,
-            line: self.line,
+impl Content {
+    pub fn to_string(&self) -> String {
+        match &self {
+            Content::Boolean(v) => v.to_string(),
+            Content::Integer(v) => v.to_string(),
+            Content::Floating(v) => v.to_string(),
+            Content::Character(v) => v.to_string(),
+            Content::String(v) => v.clone(),
+            Content::Null => "null".to_string(),
         }
     }
 }

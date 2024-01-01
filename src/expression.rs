@@ -1,10 +1,10 @@
-use crate::token::Token;
+use crate::token::{Content, Token};
 
 // https://doc.rust-lang.org/std/boxed/index.html
 // https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html#enum-values
 pub enum Expression {
     Literal {
-        token: Token,
+        content: Content,
     },
 
     Grouping {
@@ -30,7 +30,7 @@ pub fn parentesize_expression(name: String, expressions: Vec<Expression>) -> Str
         text.push(' ');
 
         let txt: String = match e {
-            Expression::Literal { token: t } => t.content_to_string(),
+            Expression::Literal { content: c } => c.to_string(),
             Expression::Grouping { exp } => parentesize_expression("group".to_string(), vec![*exp]),
             Expression::Unary { token, exp } => parentesize_expression(token.lexeme, vec![*exp]),
             Expression::Binary { left, token, right } => {
