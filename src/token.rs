@@ -18,7 +18,7 @@ pub enum TokenType {
     Ampersand,
     Pipe,
     Caret,
-    Tilde,
+    ExclamationMark,
     GreaterGreater,
     LessLess,
 
@@ -141,7 +141,6 @@ pub enum TokenType {
     Colon,
     Semicolon,
     Underscore,
-    ExclamationMark,
     QuestionMark,
     PeriodPeriod,
     ForwardArrow,
@@ -151,7 +150,7 @@ pub enum TokenType {
     Eof,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum Content {
     Boolean(bool),
     Integer(i32),
@@ -161,7 +160,7 @@ pub enum Content {
     Null,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,

@@ -2,6 +2,7 @@ use crate::token::{Content, Token};
 
 // https://doc.rust-lang.org/std/boxed/index.html
 // https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html#enum-values
+#[derive(Debug, Clone)]
 pub enum Expression {
     Literal {
         content: Content,

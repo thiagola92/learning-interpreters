@@ -1,10 +1,12 @@
 mod error;
 mod expression;
+mod interpreter;
 mod parser;
 mod scanner;
 mod token;
 
 use expression::Expression;
+use interpreter::Interpreter;
 use parser::Parser;
 use scanner::Scanner;
 use std::env;
@@ -87,9 +89,13 @@ fn run(code: String) {
     }
 
     let expression: Expression = exp.unwrap();
+    let interpreter: Interpreter = Interpreter::new();
 
-    println!(
-        "{}",
-        expression::parentesize_expression("".to_string(), vec![expression])
-    );
+    // println!("{:#?}", expression);
+    println!("{:#?}", interpreter.evaluate(expression.clone()));
+
+    // println!(
+    //     "{}",
+    //     expression::parentesize_expression("".to_string(), vec![expression])
+    // );
 }

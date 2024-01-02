@@ -134,7 +134,6 @@ impl Scanner {
             '&' if self.is_followed_by('=') => self.add_token(AmpersandEqual),
             '|' if self.is_followed_by('=') => self.add_token(PipeEqual),
             '^' if self.is_followed_by('=') => self.add_token(CaretEqual),
-            '~' if self.is_followed_by('=') => self.add_token(Tilde),
 
             // Bitwise
             '>' if self.is_followed_by('>') => self.add_token(GreaterGreater),
@@ -160,6 +159,7 @@ impl Scanner {
             '&' => self.add_token(Ampersand),
             '|' => self.add_token(Pipe),
             '^' => self.add_token(Caret),
+            '!' => self.add_token(ExclamationMark),
 
             // Design pattern
             '@' => self.add_token(AtSign),
@@ -196,7 +196,6 @@ impl Scanner {
             ',' => self.add_token(Comma),
             ':' => self.add_token(Colon),
             ';' => self.add_token(Semicolon),
-            '!' => self.add_token(ExclamationMark),
             '?' => self.add_token(QuestionMark),
             '_' => self.add_token(Underscore),
 

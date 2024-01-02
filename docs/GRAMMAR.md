@@ -4,7 +4,7 @@ expression      -> equality;
 equality        -> comparison (("==" | "!=") comparison)*;
 comparison      -> term (("<=" | "=>" | "<" | ">") term)*;
 term            -> factorization (("+" | "-" | "&" | "|" | "^") factorization)*;
-factorization   -> unary (("\*" | "/" | ">>" | "<<") unary)*;
+factorization   -> unary (("\*" | "/" | "%" | "**" | | ">>" | "<<") unary)*;
 unary           -> ("not" | "-" | "~") unary | primary;
 primary         -> INTEGER | FLOATING | CHARACTER | STRING | "true" | "false" | "null" | "(" expression ")";
 

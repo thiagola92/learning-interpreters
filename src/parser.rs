@@ -32,11 +32,13 @@ impl Parser {
             _ => return Err(()),
         };
 
-        while self.any(vec![Equal, NotEqual]) {
+        while self.any(vec![EqualEqual, NotEqual]) {
+            let op: Token = self.previous().clone();
+
             exp = match self.comparison() {
                 Ok(e) => Expression::Binary {
                     left: Box::new(exp),
-                    token: self.previous().clone(),
+                    token: op,
                     right: Box::new(e),
                 },
                 _ => return Err(()),
@@ -53,10 +55,12 @@ impl Parser {
         };
 
         while self.any(vec![LessEqual, GreaterEqual, Less, Greater]) {
+            let op: Token = self.previous().clone();
+
             exp = match self.term() {
                 Ok(e) => Expression::Binary {
                     left: Box::new(exp),
-                    token: self.previous().clone(),
+                    token: op,
                     right: Box::new(e),
                 },
                 _ => return Err(()),
@@ -73,10 +77,12 @@ impl Parser {
         };
 
         while self.any(vec![Plus, Minus, Ampersand, Pipe, Caret]) {
+            let op: Token = self.previous().clone();
+
             exp = match self.factorization() {
                 Ok(e) => Expression::Binary {
                     left: Box::new(exp),
-                    token: self.previous().clone(),
+                    token: op,
                     right: Box::new(e),
                 },
                 _ => return Err(()),
@@ -93,10 +99,12 @@ impl Parser {
         };
 
         while self.any(vec![Star, Slash, GreaterGreater, LessLess]) {
+            let op: Token = self.previous().clone();
+
             exp = match self.unary() {
                 Ok(e) => Expression::Binary {
                     left: Box::new(exp),
-                    token: self.previous().clone(),
+                    token: op,
                     right: Box::new(e),
                 },
                 _ => return Err(()),
@@ -107,10 +115,12 @@ impl Parser {
     }
 
     fn unary(&mut self) -> Result<Expression, ()> {
-        if self.any(vec![Not, Minus, Tilde]) {
+        if self.any(vec![Not, Minus, ExclamationMark]) {
+            let op: Token = self.previous().clone();
+
             match self.unary() {
                 Ok(e) => Ok(Expression::Unary {
-                    token: self.previous().clone(),
+                    token: op,
                     exp: Box::new(e),
                 }),
                 _ => Err(()),
