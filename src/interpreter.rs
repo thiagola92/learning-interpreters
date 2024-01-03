@@ -8,8 +8,7 @@ impl Interpreter {
         Interpreter {}
     }
 
-    // Change to Result<Content, ()>
-    pub fn evaluate(&self, exp: Expression) -> Content {
+    pub fn evaluate(&self, exp: Expression) -> Result<Content, ()> {
         match exp {
             Expression::Literal { content } => content,
             Expression::Grouping { exp } => self.evaluate(*exp),
