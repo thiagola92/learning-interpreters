@@ -49,6 +49,9 @@ fn run_file(filename: String) {
             if error::HAD_ERROR {
                 process::exit(65);
             }
+            if error::HAD_RUNTIME_ERROR {
+                process::exit(70);
+            }
         }
     }
 }
@@ -72,6 +75,7 @@ fn run_prompt() {
         // Interactive mode shouldn't stop when error occurs.
         unsafe {
             error::HAD_ERROR = false;
+            error::HAD_RUNTIME_ERROR = false;
         }
     }
 }
@@ -90,9 +94,10 @@ fn run(code: String) {
 
     let expression: Expression = exp.unwrap();
     let interpreter: Interpreter = Interpreter::new();
+    interpreter.interpret(expression);
 
     // println!("{:#?}", expression);
-    println!("{:#?}", interpreter.evaluate(expression.clone()));
+    // println!("{:#?}", interpreter.evaluate(expression.clone()));
 
     // println!(
     //     "{}",

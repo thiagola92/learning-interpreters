@@ -121,83 +121,83 @@ impl Scanner {
 
         match c {
             // Assignment
-            '>' if self.is_followed_by_both('>', '=') => self.add_token(GreaterGreaterEqual),
-            '<' if self.is_followed_by_both('<', '=') => self.add_token(LessLessEqual),
-            '*' if self.is_followed_by_both('*', '=') => self.add_token(StarStarEqual),
+            '>' if self.is_followed_by_both('>', '=') => self.add_token(GreaterGreaterEqual, ">>="),
+            '<' if self.is_followed_by_both('<', '=') => self.add_token(LessLessEqual, "<<="),
+            '*' if self.is_followed_by_both('*', '=') => self.add_token(StarStarEqual, "**="),
 
             // Assignment
-            '+' if self.is_followed_by('=') => self.add_token(PlusEqual),
-            '-' if self.is_followed_by('=') => self.add_token(MinusEqual),
-            '*' if self.is_followed_by('=') => self.add_token(StarEqual),
-            '/' if self.is_followed_by('=') => self.add_token(SlashEqual),
-            '%' if self.is_followed_by('=') => self.add_token(PercentageEqual),
-            '&' if self.is_followed_by('=') => self.add_token(AmpersandEqual),
-            '|' if self.is_followed_by('=') => self.add_token(PipeEqual),
-            '^' if self.is_followed_by('=') => self.add_token(CaretEqual),
+            '+' if self.is_followed_by('=') => self.add_token(PlusEqual, "+="),
+            '-' if self.is_followed_by('=') => self.add_token(MinusEqual, "-="),
+            '*' if self.is_followed_by('=') => self.add_token(StarEqual, "*="),
+            '/' if self.is_followed_by('=') => self.add_token(SlashEqual, "/="),
+            '%' if self.is_followed_by('=') => self.add_token(PercentageEqual, "%="),
+            '&' if self.is_followed_by('=') => self.add_token(AmpersandEqual, "&="),
+            '|' if self.is_followed_by('=') => self.add_token(PipeEqual, "|="),
+            '^' if self.is_followed_by('=') => self.add_token(CaretEqual, "^="),
 
             // Bitwise
-            '>' if self.is_followed_by('>') => self.add_token(GreaterGreater),
-            '<' if self.is_followed_by('<') => self.add_token(LessLess),
+            '>' if self.is_followed_by('>') => self.add_token(GreaterGreater, ">>"),
+            '<' if self.is_followed_by('<') => self.add_token(LessLess, "<<"),
 
             // Comparassion
-            '=' if self.is_followed_by('=') => self.add_token(EqualEqual),
-            '!' if self.is_followed_by('=') => self.add_token(NotEqual),
-            '>' if self.is_followed_by('=') => self.add_token(GreaterEqual),
-            '<' if self.is_followed_by('=') => self.add_token(LessEqual),
+            '=' if self.is_followed_by('=') => self.add_token(EqualEqual, "=="),
+            '!' if self.is_followed_by('=') => self.add_token(NotEqual, "!="),
+            '>' if self.is_followed_by('=') => self.add_token(GreaterEqual, ">="),
+            '<' if self.is_followed_by('=') => self.add_token(LessEqual, "<="),
 
             // Math
-            '*' if self.is_followed_by('*') => self.add_token(StarStar),
+            '*' if self.is_followed_by('*') => self.add_token(StarStar, "**"),
 
             // TODO: Classify
-            '.' if self.is_followed_by('>') => self.add_token(PeriodPeriod),
-            '-' if self.is_followed_by('>') => self.add_token(ForwardArrow),
+            '.' if self.is_followed_by('.') => self.add_token(PeriodPeriod, ".."),
+            '-' if self.is_followed_by('>') => self.add_token(ForwardArrow, "->"),
 
             // Assignment
-            '=' => self.add_token(Equal),
+            '=' => self.add_token(Equal, "="),
 
             // Bitwise
-            '&' => self.add_token(Ampersand),
-            '|' => self.add_token(Pipe),
-            '^' => self.add_token(Caret),
-            '!' => self.add_token(ExclamationMark),
+            '&' => self.add_token(Ampersand, "&"),
+            '|' => self.add_token(Pipe, "|"),
+            '^' => self.add_token(Caret, "^"),
+            '!' => self.add_token(ExclamationMark, "!"),
 
             // Design pattern
-            '@' => self.add_token(AtSign),
+            '@' => self.add_token(AtSign, "@"),
 
             // Comparassion
-            '>' => self.add_token(Greater),
-            '<' => self.add_token(Less),
+            '>' => self.add_token(Greater, ">"),
+            '<' => self.add_token(Less, "<"),
 
             // Math
-            '+' => self.add_token(Plus),
-            '-' => self.add_token(Minus),
-            '*' => self.add_token(Star),
-            '/' => self.add_token(Slash),
-            '%' => self.add_token(Percentage),
+            '+' => self.add_token(Plus, "+"),
+            '-' => self.add_token(Minus, "-"),
+            '*' => self.add_token(Star, "*"),
+            '/' => self.add_token(Slash, "/"),
+            '%' => self.add_token(Percentage, "%"),
 
             // Open-close
-            '(' => self.add_token(ParenthesisOpen),
-            ')' => self.add_token(ParenthesisClose),
-            '[' => self.add_token(BracketOpen),
-            ']' => self.add_token(BracketClose),
-            '{' => self.add_token(BraceOpen),
-            '}' => self.add_token(BraceClose),
+            '(' => self.add_token(ParenthesisOpen, "("),
+            ')' => self.add_token(ParenthesisClose, ")"),
+            '[' => self.add_token(BracketOpen, "["),
+            ']' => self.add_token(BracketClose, "]"),
+            '{' => self.add_token(BraceOpen, "{"),
+            '}' => self.add_token(BraceClose, "}"),
 
             // Scope
             '\n' => self.add_newline_token(),
-            '\t' => self.add_token(Indent),
+            '\t' => self.add_token(Indent, "\\t"),
 
             // TODO: Classify
             '\'' => self.add_character_token(),
             '"' => self.add_string_token(),
             '#' => self.add_comment_token(),
-            '$' => self.add_token(Dollar),
-            '.' => self.add_token(Period),
-            ',' => self.add_token(Comma),
-            ':' => self.add_token(Colon),
-            ';' => self.add_token(Semicolon),
-            '?' => self.add_token(QuestionMark),
-            '_' => self.add_token(Underscore),
+            '$' => self.add_token(Dollar, "$"),
+            '.' => self.add_token(Period, "."),
+            ',' => self.add_token(Comma, ","),
+            ':' => self.add_token(Colon, ":"),
+            ';' => self.add_token(Semicolon, ";"),
+            '?' => self.add_token(QuestionMark, "?"),
+            '_' => self.add_token(Underscore, "_"),
 
             // Ignored
             ' ' => (),
@@ -215,10 +215,10 @@ impl Scanner {
         };
     }
 
-    fn add_token(&mut self, token_type: TokenType) {
+    fn add_token(&mut self, token_type: TokenType, lexeme: &str) {
         self.tokens.push(Token {
             token_type,
-            lexeme: "".to_string(),
+            lexeme: lexeme.to_string(),
             content: Content::Null,
             line: self.line,
         });
@@ -229,7 +229,7 @@ impl Scanner {
 
         self.tokens.push(Token {
             token_type: Comment,
-            lexeme: "".to_string(),
+            lexeme: "comment".to_string(),
             content: Content::String(string),
             line: self.line,
         });
@@ -250,7 +250,7 @@ impl Scanner {
 
         self.tokens.push(Token {
             token_type: String_,
-            lexeme: "".to_string(),
+            lexeme: "string".to_string(),
             content: Content::String(string),
             line: self.line,
         });
@@ -275,7 +275,7 @@ impl Scanner {
 
         self.tokens.push(Token {
             token_type: Character,
-            lexeme: "".to_string(),
+            lexeme: "character".to_string(),
             content: Content::Character(string.chars().nth(0).unwrap()),
             line: self.line,
         });
@@ -298,14 +298,14 @@ impl Scanner {
 
             self.tokens.push(Token {
                 token_type: Floating,
-                lexeme: "".to_string(),
+                lexeme: "floating".to_string(),
                 content: Content::Floating(string.parse::<f32>().unwrap()),
                 line: self.line,
             });
         } else {
             self.tokens.push(Token {
                 token_type: Integer,
-                lexeme: "".to_string(),
+                lexeme: "integer".to_string(),
                 content: Content::Integer(string.parse::<i32>().unwrap()),
                 line: self.line,
             });
@@ -323,7 +323,7 @@ impl Scanner {
             Some(&token_type) => {
                 self.tokens.push(Token {
                     token_type,
-                    lexeme: "".to_string(),
+                    lexeme: string.to_string(),
                     content: match token_type {
                         True => Content::Boolean(true),
                         False => Content::Boolean(false),
@@ -335,7 +335,7 @@ impl Scanner {
             _ => {
                 self.tokens.push(Token {
                     token_type: Identifier,
-                    lexeme: "".to_string(),
+                    lexeme: "identifier".to_string(),
                     content: Content::String(string),
                     line: self.line,
                 });
@@ -344,7 +344,7 @@ impl Scanner {
     }
 
     fn add_newline_token(&mut self) {
-        self.add_token(Newline);
+        self.add_token(Newline, "\\n");
         self.line += 1;
     }
 

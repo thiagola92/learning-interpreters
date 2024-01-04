@@ -98,7 +98,7 @@ impl Parser {
             _ => return Err(()),
         };
 
-        while self.any(vec![Star, Slash, GreaterGreater, LessLess]) {
+        while self.any(vec![Star, Slash, GreaterGreater, LessLess, StarStar]) {
             let op: Token = self.previous().clone();
 
             exp = match self.unary() {
