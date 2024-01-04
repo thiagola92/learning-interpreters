@@ -16,12 +16,6 @@ match a:
         pass
     c:
         pass
-    d, e, f:
-        pass
-    g if a > 10:
-        pass
-    _:
-        pass
 ```
 
 A same scope can be used to many values.
@@ -195,10 +189,137 @@ loop:
 
 # Definition
 
+Declare a variable without value.  
+```
+var a
+```
+
+Declare a variable with a value.
 ```
 var a = 10
 ```
 
+Declare a constant with a value, constants are read only.
 ```
 const a = 10
+```
+
+Declare an enum.
+```
+enum a:
+    b
+    c
+    d
+    e
+    f
+    g
+    h
+```
+
+Enums can be used as tagged union, so each tag holds data.
+```
+enum a:
+    b(int)
+    c(float)
+    d(string)
+    e(int, int)
+    f(int, float)
+    g
+
+var z
+
+z = a.b(10)
+print(z[0])
+
+z = a.c(5.0)
+print(z[0])
+
+z = a.d("string")
+print(z[0])
+
+z = a.e(10, 20)
+print(z[0], z[1])
+
+z = a.f(20, 5.0)
+print(z[0], z[1])
+
+z = a.g
+```
+
+Passing signal/func/coroutine signatures is also possible, this will enforce the types.  
+```
+enum a:
+    b(signal(int, float)),
+    c(func(int, int) -> float),
+    d(coroutine(float, float) -> int),
+
+var z
+
+z = a.b(mysignal)
+emit z[0](10, 5.0)
+
+z = a.c(myfunc)
+z[0](10, 10)
+
+z = a.d(mycoro)
+y = z[0](5.0, 5.0)
+resume y
+```
+
+Passing struct/class signature is also possible, this will enforce being an instance of it.  
+```
+enum a:
+    b(StructFoo),
+    c(ClassFoo),
+
+var z
+
+z = a.b(StructFoo())
+print(z[0].struct_field)
+
+z = a.c(ClassFoo())
+print(z[0].class_field)
+```
+
+Identifiers can be used.  
+```
+enum a:
+    b(c: int, d: float),
+    c(e: ClassFoo),
+
+var z
+
+z = a.b(10, 5.0)
+print(z.c, z.d)
+
+z = a.c(ClassFoo())
+print(z.e.class_field)
+```
+
+Declare signal.  
+```
+signal a
+```
+
+Signals can send data too.  
+```
+signal a(b: int, c: float)
+```
+
+Declare function.  
+```
+func a():
+    pass
+```
+
+Functions can include parameters.    
+```
+func a(b: int, c: float):
+    pass
+```
+
+And return type.  
+```
+func a(b: int, c: float) -> int:
+    pass
 ```
