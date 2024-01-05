@@ -1,12 +1,16 @@
 # Grammar
 
-expression      -> equality;
-equality        -> comparison (("==" | "!=") comparison)*;
-comparison      -> term (("<=" | "=>" | "<" | ">") term)*;
-term            -> factorization (("+" | "-" | "&" | "|" | "^") factorization)*;
-factorization   -> unary (("\*" | "/" | "%" | "**" | | ">>" | "<<") unary)*;
-unary           -> ("not" | "-" | "~") unary | primary;
-primary         -> INTEGER | FLOATING | CHARACTER | STRING | "true" | "false" | "null" | "(" expression ")";
+program                 -> statement* EOF;
+statement               -> expression_statement;
+expression_statement    -> expression "\n";
+
+expression              -> equality;
+equality                -> comparison (("==" | "!=") comparison)*;
+comparison              -> term (("<=" | "=>" | "<" | ">") term)*;
+term                    -> factorization (("+" | "-" | "&" | "|" | "^") factorization)*;
+factorization           -> unary (("\*" | "/" | "%" | "**" | | ">>" | "<<") unary)*;
+unary                   -> ("not" | "-" | "~") unary | primary;
+primary                 -> INTEGER | FLOATING | CHARACTER | STRING | "true" | "false" | "null" | "(" expression ")";
 
 ## References
 https://en.wikipedia.org/wiki/Equality_(mathematics)  

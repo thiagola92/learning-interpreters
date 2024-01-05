@@ -1,5 +1,5 @@
-use crate::error::{parser_error, EXPECT_CLOSE_PARENTHESIS, EXPECT_EXPRESSION};
-use crate::expression::Expression;
+use crate::error::{parser_error, EXPECT_CLOSE_PARENTHESIS, EXPECT_EXPRESSION, EXPECT_NEWLINE};
+use crate::expression::{Expression, Statement};
 use crate::token::{Token, TokenType, TokenType::*};
 
 pub struct Parser {
@@ -15,11 +15,33 @@ impl Parser {
         }
     }
 
-    pub fn parse(&mut self) -> Option<Expression> {
-        match self.expression() {
-            Ok(e) => Some(e),
-            _ => None,
+    pub fn parse(&mut self) -> Vec<Statement> {
+        let mut statements: Vec<Statement> = Vec::new();
+
+        while !self.is_eof() {
+            match self.statement() {
+                Ok(s) => statements.push(s),
+                _ => (),
+            };
         }
+
+        statements
+    }
+
+    fn statement(&mut self) -> Result<Statement, ()> {
+        // TODO: check statement and decide action.
+        // if self.any(vec![Comment]) {
+
+        // }
+        self.expression_statement()
+    }
+
+    fn expression_statement(&mut self) -> Result<Statement, ()> {
+        let exp: Expression = self.expression()?;
+
+        self.consume(Newline, EXPECT_NEWLINE)?;
+
+        Ok(Statement::ExpressionStatement { exp: Box::new(exp) })
     }
 
     fn expression(&mut self) -> Result<Expression, ()> {
@@ -147,7 +169,7 @@ impl Parser {
 
             match self.consume(ParenthesisClose, EXPECT_CLOSE_PARENTHESIS) {
                 Ok(..) => return Ok(Expression::Grouping { exp: Box::new(exp) }),
-                _ => (),
+                _ => return Err(()),
             };
         }
 
@@ -156,6 +178,7 @@ impl Parser {
         Err(())
     }
 
+    // Check if next token is any of the options in the vector.
     fn any(&mut self, types: Vec<TokenType>) -> bool {
         for token_type in types.iter() {
             if self.check(token_type) {
@@ -167,6 +190,7 @@ impl Parser {
         false
     }
 
+    // Consume next token if the type match, otherwise error.
     fn consume(&mut self, token_type: TokenType, msg: &str) -> Result<(), ()> {
         if self.check(&token_type) {
             self.next();

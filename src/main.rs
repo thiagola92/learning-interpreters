@@ -5,7 +5,7 @@ mod parser;
 mod scanner;
 mod token;
 
-use expression::Expression;
+use expression::{Expression, Statement};
 use interpreter::Interpreter;
 use parser::Parser;
 use scanner::Scanner;
@@ -84,7 +84,7 @@ fn run(code: String) {
     let scanner: Scanner = Scanner::new(code);
     let tokens: Vec<Token> = scanner.scan_tokens();
     let mut parser: Parser = Parser::new(tokens);
-    let exp: Option<Expression> = parser.parse();
+    let statements: Vec<Statement> = parser.parse();
 
     unsafe {
         if error::HAD_ERROR == true {
@@ -92,15 +92,6 @@ fn run(code: String) {
         }
     }
 
-    let expression: Expression = exp.unwrap();
     let interpreter: Interpreter = Interpreter::new();
-    interpreter.interpret(expression);
-
-    // println!("{:#?}", expression);
-    // println!("{:#?}", interpreter.evaluate(expression.clone()));
-
-    // println!(
-    //     "{}",
-    //     expression::parentesize_expression("".to_string(), vec![expression])
-    // );
+    interpreter.interpret(statements);
 }

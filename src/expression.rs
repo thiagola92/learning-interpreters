@@ -24,6 +24,10 @@ pub enum Expression {
     },
 }
 
+pub enum Statement {
+    ExpressionStatement { exp: Box<Expression> },
+}
+
 pub fn parentesize_expression(name: String, expressions: Vec<Expression>) -> String {
     let mut text: String = format!("({}", name);
 

@@ -10,6 +10,7 @@ pub const WRONG_CHAR_SIZE: &str = "Single quotes should encapsulate exactly one 
 // Parser
 pub const EXPECT_CLOSE_PARENTHESIS: &str = "Expect ')' after expression.";
 pub const EXPECT_EXPRESSION: &str = "Expect expression.";
+pub const EXPECT_NEWLINE: &str = "Expect newline.";
 
 pub static mut HAD_ERROR: bool = false;
 pub static mut HAD_RUNTIME_ERROR: bool = false;

@@ -1,5 +1,5 @@
 use crate::error::runtime_error;
-use crate::expression::Expression;
+use crate::expression::{Expression, Statement};
 use crate::token::{Content, Token, TokenType};
 
 pub struct Interpreter {}
@@ -9,13 +9,19 @@ impl Interpreter {
         Interpreter {}
     }
 
-    pub fn interpret(&self, exp: Expression) {
-        match self.evaluate(exp) {
-            Ok(content) => println!("{}", content.to_string()),
-            Err((t, s)) => {
-                println!("{}", s);
-                runtime_error(t, s);
-            }
+    pub fn interpret(&self, statements: Vec<Statement>) {
+        for statement in statements {
+            self.execute(statement);
+        }
+    }
+
+    fn execute(&self, statement: Statement) {
+        match statement {
+            Statement::ExpressionStatement { exp } => match self.evaluate(*exp) {
+                Ok(c) => println!("{}", c.to_string()),
+                Err((_t, _s)) => (),
+            },
+            _ => println!("TODO: Unmatched statement"),
         }
     }
 
