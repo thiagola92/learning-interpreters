@@ -310,16 +310,183 @@ Declare function.
 ```
 func a():
     pass
+
+a()
 ```
 
 Functions can include parameters.    
 ```
 func a(b: int, c: float):
     pass
+
+a(10, 5.0)
 ```
 
 And return type.  
 ```
 func a(b: int, c: float) -> int:
     pass
+
+print(a(10, 5.0))
+```
+
+Declare coroutine.  
+```
+coroutine a():
+    pass
+
+var co = a()
+resume co()
+```
+
+Coroutines can include parameters to be used in the initialization.  
+```
+coroutine a(b: int, c: float):
+    pass
+
+var co = a(10, 5.0)
+resume co()
+```
+
+And return type.  
+```
+coroutine a(b: int, c: float) -> int:
+    pass
+
+var co = a(10, 5.0)
+print(resume co())
+```
+
+Coroutines can be suspended and resume, but it's not possible to know the types in this cases.  
+
+Declare struct.  
+```
+struct a:
+    b: int
+    c: float
+
+var z = a(10, 5.0)
+```
+
+Note that structs values are initialized on creation, you can't intialize later.  
+
+Declare class, this class can't be initialized because doesn't contains a construct.  
+```
+class a:
+    pass
+```
+
+Classes can have properties, in this case they are not acessible because they are private by default.  
+```
+class a:
+    var b: int
+    var c: float
+```
+
+Having an constructor let others initialize your class, but they are private by default so this can't be initialized.  
+```
+class a:
+    var b: int
+    var c: float
+
+    construct(b: int, c: float):
+        self.b = b
+        self.c = c
+```
+
+Public will let you create instances with this class.  
+```
+class a:
+    public var b: int
+    public var c: float
+
+    public construct(b: int, c: float):
+        self.b = b
+        self.c = c
+
+var x = a(10, 5.0)
+print(x.b)
+print(x.c)
+```
+
+Declare singleton, they are classes that can only be initialized once.  
+```
+singleton a:
+    public var b: int
+    public var c: float
+
+    public construct(b: int, c: float):
+        self.b = b
+        self.c = c
+
+var x = a(10, 5.0)
+var z = a(5, 10.0)
+
+# Constructor can still be called multiple times, but always return the same instance.
+print(x.b, x.c) # 10 5.0
+print(z.b. z.c) # 10 5.0
+```
+
+Declare an empty interface (any class satisfy this condition).  
+```
+interface a:
+    pass
+```
+
+This make classes that implement this interface have this 3 methods.  
+```
+interface a:
+    a()
+    b(a: int)
+    c(a: int, b: float)
+```
+
+
+Constructors allow your class to be initialized.  
+```
+class a:
+    var b: int
+    var c: float
+
+    public construct(b: int, c: float):
+        self.b = b
+        self.c = c
+
+var x = a(10, 5.0)
+```
+
+
+You can have multiple constructors. They use the signature to know which to use.  
+```
+class a:
+    var b: int
+    var c: float
+
+    public construct(b: int, c: float):
+        self.b = b
+        self.c = c
+
+    public construct(b: int):
+        self.b = b
+        self.c = 25.0
+
+var x = a(10, 5.0)
+var z = a(10)
+```
+
+Destructor is called when the class is freed.  
+```
+class a:
+    var b: int
+    var c: float
+
+    public construct(b: int, c: float):
+        self.b = b
+        self.c = c
+
+    destructor:
+        print("bye")
+
+var x = a(10, 5.0)
+# Will leave scope and call destructor
 ```
