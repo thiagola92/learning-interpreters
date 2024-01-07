@@ -22,6 +22,10 @@ pub enum Expression {
         token: Token,
         right: Box<Expression>,
     },
+
+    Variable {
+        token: Token,
+    },
 }
 
 pub enum Statement {

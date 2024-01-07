@@ -163,7 +163,7 @@
 
 | Token | Description |
 | --- | --- |
-| where | |
+| where | Check arguments types? |
 | with | |
 | # | Comment |
 | $ | |

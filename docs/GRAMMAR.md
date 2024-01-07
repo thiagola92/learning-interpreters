@@ -1,7 +1,11 @@
 # Grammar
 
-program                 -> statement* EOF;
+program                 -> declaration* EOF;
+declaration             -> var_declaration | statement;
+var_declaration         -> "var" IDENTIFIER ("=" expression)? "\n";
+
 statement               -> expression_statement;
+
 expression_statement    -> expression "\n";
 
 expression              -> equality;
@@ -10,7 +14,7 @@ comparison              -> term (("<=" | "=>" | "<" | ">") term)*;
 term                    -> factorization (("+" | "-" | "&" | "|" | "^") factorization)*;
 factorization           -> unary (("\*" | "/" | "%" | "**" | | ">>" | "<<") unary)*;
 unary                   -> ("not" | "-" | "~") unary | primary;
-primary                 -> INTEGER | FLOATING | CHARACTER | STRING | "true" | "false" | "null" | "(" expression ")";
+primary                 -> INTEGER | FLOATING | CHARACTER | STRING | "true" | "false" | "null" | "(" expression ")" | IDENTIFIER;
 
 ## References
 https://en.wikipedia.org/wiki/Equality_(mathematics)  
