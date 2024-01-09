@@ -1,44 +1,46 @@
-use crate::token::{Token, TokenType};
+pub enum ExitCode {
+    // Linux exit codes at /usr/include/sysexits.h
+    OK = 0,       /* successful termination */
+    USAGE = 64,   /* command line usage error */
+    DATAERR = 65, /* data format error */
+    NOINPUT = 66, /* cannot open input */
+    // NOUSER = 67,      /* addressee unknown */
+    // NOHOST = 68,      /* host name unknown */
+    // UNAVAILABLE = 69, /* service unavailable */
+    SOFTWARE = 70, /* internal software error */
+    // OSERR = 71,       /* system error (e.g., can't fork) */
+    // OSFILE = 72,      /* critical OS file missing */
+    // CANTCREAT = 73,   /* can't create (user) output file */
+    IOERR = 74, /* input/output error */
+                // TEMPFAIL = 75,    /* temp failure; user is invited to retry */
+                // PROTOCOL = 76,    /* remote error in protocol */
+                // NOPERM = 77,      /* permission denied */
+                // CONFIG = 78,      /* configuration error */
+}
 
-// Scanner
-pub const UNFINISHED_CHARACTER: &str = "Unfinished character.";
-pub const UNFINISHED_COMMENT: &str = "Unfinished comment.";
-pub const UNFINISHED_STRING: &str = "Unfinished string.";
-pub const UNKNOW_CHAR: &str = "Unknow character.";
-pub const WRONG_CHAR_SIZE: &str = "Single quotes should encapsulate exactly one character.";
+pub static mut TOKENIZER_ERROR: bool = false;
+pub static mut INTERPRETER_ERROR: bool = false;
 
-// Parser
-pub const EXPECT_CLOSE_PARENTHESIS: &str = "Expect ')' after expression.";
-pub const EXPECT_EXPRESSION: &str = "Expect expression.";
-pub const EXPECT_NEWLINE: &str = "Expect newline.";
-
-pub static mut HAD_ERROR: bool = false;
-pub static mut HAD_RUNTIME_ERROR: bool = false;
-
-pub fn runtime_error(token: Token, msg: String) {
-    println!("[line {}] Error {}: {}", token.line, token.lexeme, &msg);
-
+pub fn code_error() -> ExitCode {
     unsafe {
-        HAD_RUNTIME_ERROR = true;
+        if TOKENIZER_ERROR {
+            ExitCode::DATAERR
+        } else if INTERPRETER_ERROR {
+            ExitCode::SOFTWARE
+        } else {
+            ExitCode::OK
+        }
     }
 }
 
-pub fn parser_error(token: &Token, msg: &str) {
-    if token.token_type == TokenType::Eof {
-        report(token.line, " at end", msg);
-    } else {
-        report(token.line, format!("at '{}'", token.lexeme).as_str(), msg);
-    }
-}
-
-pub fn error(line: usize, msg: &str) {
-    report(line, "", &msg);
-}
-
-fn report(line: usize, whre: &str, msg: &str) {
-    println!("[line {}] Error {}: {}", line, whre, &msg);
-
+pub fn clear_errors() {
     unsafe {
-        HAD_ERROR = true;
+        TOKENIZER_ERROR = false;
+        INTERPRETER_ERROR = false;
     }
+}
+
+pub fn tokenizer_error(line: usize, message: String) {
+    println!("[line {}] Error: {}", line, message);
+    unsafe { TOKENIZER_ERROR = true }
 }

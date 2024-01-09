@@ -1,58 +1,57 @@
 mod error;
-mod expression;
-mod interpreter;
-mod parser;
-mod scanner;
-mod token;
+mod tokenizer;
 
-use expression::{Expression, Statement};
-use interpreter::Interpreter;
-use parser::Parser;
-use scanner::Scanner;
+use error::{clear_errors, code_error, ExitCode};
 use std::env;
 use std::fs::File;
-use std::io;
-use std::io::{BufRead, BufReader, Write};
+use std::io::{stdin, stdout, BufReader, Read, Write};
 use std::process;
-use token::Token;
+use tokenizer::debug::output_tokens;
+use tokenizer::token::Token;
+use tokenizer::Tokenizer;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
 
     if args.len() > 2 {
         println!("Usage: seth [file]");
-        process::exit(64);
+        process::exit(ExitCode::USAGE as i32)
     } else if args.len() == 2 {
-        run_file(args[0].clone());
+        run_file(&args[0])
     } else {
         run_prompt();
     }
 }
 
-fn run_file(filename: String) {
-    let file: File = File::open(&filename).unwrap();
+fn run_file(filepath: &String) {
+    let file: File = match File::open(&filepath) {
+        Ok(f) => f,
+        _ => {
+            println!("File not found: {}", &filepath);
+            process::exit(ExitCode::NOINPUT as i32)
+        }
+    };
+
     let mut reader: BufReader<File> = BufReader::new(file);
+    let mut code: String = String::new();
 
-    loop {
-        let mut line: String = String::new();
-        let size: usize = reader.read_line(&mut line).unwrap();
-
-        // EOF
-        if size == 0 {
-            break;
-        }
-
-        run(line);
-
-        // Found an error in the code.
-        unsafe {
-            if error::HAD_ERROR {
-                process::exit(65);
-            }
-            if error::HAD_RUNTIME_ERROR {
-                process::exit(70);
+    match reader.read_to_string(&mut code) {
+        Ok(size) => {
+            if size == 0 {
+                process::exit(ExitCode::OK as i32)
             }
         }
+        _ => {
+            println!("Unable to read file: {}", &filepath);
+            process::exit(ExitCode::NOINPUT as i32)
+        }
+    }
+
+    run(code);
+
+    match code_error() {
+        ExitCode::OK => (),
+        c => process::exit(c as i32),
     }
 }
 
@@ -60,38 +59,34 @@ fn run_prompt() {
     loop {
         print!("> ");
 
-        io::stdout().flush().unwrap();
-
-        let mut line: String = String::new();
-
-        io::stdin().read_line(&mut line).unwrap();
-
-        if line.eq("") {
-            break;
+        match stdout().flush() {
+            Ok(_) => (),
+            _ => {
+                println!("Couldn't write to standard output");
+                process::exit(ExitCode::IOERR as i32)
+            }
         }
 
-        run(line);
+        let mut code: String = String::new();
 
-        // Interactive mode shouldn't stop when error occurs.
-        unsafe {
-            error::HAD_ERROR = false;
-            error::HAD_RUNTIME_ERROR = false;
+        match stdin().read_line(&mut code) {
+            Ok(size) => {
+                if size == 0 {
+                    process::exit(ExitCode::OK as i32)
+                }
+            }
+            _ => {
+                println!("Couldn't read to standard input");
+                process::exit(ExitCode::IOERR as i32)
+            }
         }
+
+        run(code);
+        clear_errors();
     }
 }
 
 fn run(code: String) {
-    let scanner: Scanner = Scanner::new(code);
-    let tokens: Vec<Token> = scanner.scan_tokens();
-    let mut parser: Parser = Parser::new(tokens);
-    let statements: Vec<Statement> = parser.parse();
-
-    unsafe {
-        if error::HAD_ERROR == true {
-            return;
-        }
-    }
-
-    let interpreter: Interpreter = Interpreter::new();
-    interpreter.interpret(statements);
+    let tokens: Vec<Token> = Tokenizer::new(code).tokenize();
+    println!("{}", output_tokens(&tokens));
 }
