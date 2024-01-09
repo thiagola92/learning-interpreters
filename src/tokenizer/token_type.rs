@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone)]
 pub enum TokenType {
     // Assignment
     Equal,
@@ -42,21 +42,21 @@ pub enum TokenType {
     Await,
     Yield,
     Resume,
+    Where,
 
     // Control Flow Modifier
     Else,
     Break,
     Continue,
 
-    // Definition
+    // Declaration
     Var,
     Const,
     Enum,
     Signal,
     Func,
-    Coroutine,
+    Coro,
     Struct,
-    Union,
     Class,
     Singleton,
     Interface,
@@ -65,9 +65,8 @@ pub enum TokenType {
     Set,
     Get,
     Import,
-    As,
 
-    // Definition Modifier
+    // Declaration Modifier
     Static,
     Public,
     Extends,
@@ -80,12 +79,11 @@ pub enum TokenType {
     AtSign,
 
     // Literal
-    True,
-    False,
-    Integer,
-    Floating,
-    Character,
-    String_, // Escape conflict with String
+    Boolean { content: bool },
+    Integer { content: i64 },
+    Floating { content: f64 },
+    Character { content: char },
+    String_ { content: String }, // Escape conflict with String
     Null,
 
     // Logical
@@ -105,7 +103,6 @@ pub enum TokenType {
     Self_, // Escape conflict with Self
     Super,
     Is,
-    To,
 
     // Open Close
     ParenthesisOpen,
@@ -117,7 +114,7 @@ pub enum TokenType {
 
     // Scope
     Newline,
-    Indent,
+    Indent { level: i8 },
 
     // Test
     Breakpoint,
@@ -130,11 +127,16 @@ pub enum TokenType {
     Float,
     Char,
     Str,
+    Void,
+
+    // Typecasting
+    As,
 
     // TODO: Classify
-    Where,
+    To,
     With,
-    Comment,
+    Print,
+    Comment { content: String },
     Dollar,
     Period,
     Comma,
@@ -146,37 +148,6 @@ pub enum TokenType {
     ForwardArrow,
 
     // Special
-    Identifier, // Name of variables, classes, functions, etc
+    Identifier { name: String },
     Eof,
-}
-
-#[derive(Debug, Clone)]
-pub enum Content {
-    Boolean(bool),
-    Integer(i32),
-    Floating(f32),
-    Character(char),
-    String(String),
-    Null,
-}
-
-#[derive(Debug, Clone)]
-pub struct Token {
-    pub token_type: TokenType,
-    pub lexeme: String,
-    pub content: Content,
-    pub line: usize,
-}
-
-impl Content {
-    pub fn to_string(&self) -> String {
-        match &self {
-            Content::Boolean(v) => v.to_string(),
-            Content::Integer(v) => v.to_string(),
-            Content::Floating(v) => v.to_string(),
-            Content::Character(v) => v.to_string(),
-            Content::String(v) => v.clone(),
-            Content::Null => "null".to_string(),
-        }
-    }
 }
