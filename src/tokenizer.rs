@@ -7,7 +7,8 @@ pub mod utility;
 
 use super::error::tokenizer_error;
 use error::*;
-use keywords::get_keyword;
+use keywords::get_keywords;
+use std::collections::HashMap;
 use token::Token;
 use token_type::TokenType;
 use token_type::TokenType::*;
@@ -20,6 +21,8 @@ pub struct Tokenizer {
     start: usize,
     current: usize,
     line: usize,
+
+    keywords: HashMap<String, TokenType>,
 }
 
 impl Tokenizer {
@@ -31,6 +34,8 @@ impl Tokenizer {
             start: 0,
             current: 0,
             line: 1,
+
+            keywords: get_keywords(),
         }
     }
 
@@ -293,10 +298,10 @@ impl Tokenizer {
             string.push(self.advance_n(0))
         }
 
-        match get_keyword(string.as_str()) {
+        match self.keywords.get(&string) {
             Some(token_type) => {
                 self.tokens.push(Token {
-                    token_type,
+                    token_type: token_type.clone(),
                     lexeme: string,
                     line: self.line,
                 });
