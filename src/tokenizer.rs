@@ -46,7 +46,7 @@ impl Tokenizer {
             line: self.line,
         });
 
-        while !self.is_nth_eof(0) {
+        while !self.is_eof() {
             self.start = self.current;
             self.scan_token();
         }
@@ -295,7 +295,7 @@ impl Tokenizer {
         let mut string: String = format!("{}", c);
 
         while is_alpha_numeric(self.peek_nth(0)) {
-            string.push(self.advance_n(0))
+            string.push(self.advance_n(1))
         }
 
         match self.keywords.get(&string) {
@@ -318,9 +318,9 @@ impl Tokenizer {
         };
     }
 
-    // Check if the next nth char reached/passed EOF.
-    fn is_nth_eof(&self, n: usize) -> bool {
-        self.current + n >= self.source.len()
+    // Check if reached/passed EOF.
+    fn is_eof(&self) -> bool {
+        self.current >= self.source.len()
     }
 
     // Check if the next chars are exactly that.
@@ -356,21 +356,13 @@ impl Tokenizer {
         }
     }
 
-    // Get the next nth char value.
-    fn peek_nth(&self, n: usize) -> char {
-        match self.source.chars().nth(self.current + n) {
-            Some(c) => c,
-            _ => '\0',
-        }
-    }
-
     // Keep advancing until meet one of the chars.
     fn advance_until_one_of(&mut self, chars: &str, escape: bool) -> Result<String, ()> {
         let mut string: String = "".to_string();
         let chrs: Vec<char> = chars.chars().collect();
 
         while !chrs.contains(&self.peek_nth(0)) {
-            if self.is_nth_eof(0) {
+            if self.is_eof() {
                 return Err(());
             }
 
@@ -387,6 +379,14 @@ impl Tokenizer {
         }
 
         Ok(string)
+    }
+
+    // Get the next nth char value.
+    fn peek_nth(&self, n: usize) -> char {
+        match self.source.chars().nth(self.current + n) {
+            Some(c) => c,
+            _ => '\0',
+        }
     }
 
     // Advance and convert escape characters.

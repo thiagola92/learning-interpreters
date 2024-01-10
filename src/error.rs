@@ -19,11 +19,12 @@ pub enum ExitCode {
 }
 
 pub static mut TOKENIZER_ERROR: bool = false;
+pub static mut PARSER_ERROR: bool = false;
 pub static mut INTERPRETER_ERROR: bool = false;
 
 pub fn code_error() -> ExitCode {
     unsafe {
-        if TOKENIZER_ERROR {
+        if TOKENIZER_ERROR || PARSER_ERROR {
             ExitCode::DATAERR
         } else if INTERPRETER_ERROR {
             ExitCode::SOFTWARE
@@ -36,6 +37,7 @@ pub fn code_error() -> ExitCode {
 pub fn clear_errors() {
     unsafe {
         TOKENIZER_ERROR = false;
+        PARSER_ERROR = false;
         INTERPRETER_ERROR = false;
     }
 }
@@ -43,4 +45,9 @@ pub fn clear_errors() {
 pub fn tokenizer_error(line: usize, message: String) {
     println!("[line {}] Error: {}", line, message);
     unsafe { TOKENIZER_ERROR = true }
+}
+
+pub fn parser_error(line: usize, message: String) {
+    println!("[line {}] Error: {}", line, message);
+    unsafe { PARSER_ERROR = true }
 }
