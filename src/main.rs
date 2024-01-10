@@ -1,7 +1,10 @@
 mod error;
+mod parser;
 mod tokenizer;
 
 use error::{clear_errors, code_error, ExitCode};
+use parser::debug::output_tree;
+use parser::Parser;
 use std::env;
 use std::fs::File;
 use std::io::{stdin, stdout, BufReader, Read, Write};
@@ -89,4 +92,7 @@ fn run_prompt() {
 fn run(code: String) {
     let tokens: Vec<Token> = Tokenizer::new(code).tokenize();
     println!("{}", output_tokens(&tokens));
+
+    let expressions = Parser::new(tokens).parse();
+    println!("{}", output_tree(expressions));
 }
