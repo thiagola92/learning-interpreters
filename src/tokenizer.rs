@@ -64,12 +64,12 @@ impl Tokenizer {
         let c: char = self.advance_n(1);
 
         match c {
-            // Assignment
+            // Assignment (3 chars)
             '>' if self.is_followed_by(">=") => self.add_token(GreaterGreaterEqual, ">>="),
             '<' if self.is_followed_by("<=") => self.add_token(LessLessEqual, "<<="),
             '*' if self.is_followed_by("*=") => self.add_token(StarStarEqual, "**="),
 
-            // Assignment
+            // Assignment (2 chars)
             '+' if self.is_followed_by("=") => self.add_token(PlusEqual, "+="),
             '-' if self.is_followed_by("=") => self.add_token(MinusEqual, "-="),
             '*' if self.is_followed_by("=") => self.add_token(StarEqual, "*="),
@@ -79,20 +79,20 @@ impl Tokenizer {
             '|' if self.is_followed_by("=") => self.add_token(PipeEqual, "|="),
             '^' if self.is_followed_by("=") => self.add_token(CaretEqual, "^="),
 
-            // Bitwise
+            // Bitwise (2 chars)
             '>' if self.is_followed_by(">") => self.add_token(GreaterGreater, ">>"),
             '<' if self.is_followed_by("<") => self.add_token(LessLess, "<<"),
 
-            // Comparassion
+            // Comparassion (2 chars)
             '=' if self.is_followed_by("=") => self.add_token(EqualEqual, "=="),
             '!' if self.is_followed_by("=") => self.add_token(NotEqual, "!="),
             '>' if self.is_followed_by("=") => self.add_token(GreaterEqual, ">="),
             '<' if self.is_followed_by("=") => self.add_token(LessEqual, "<="),
 
-            // Math
+            // Math (2 chars)
             '*' if self.is_followed_by("*") => self.add_token(StarStar, "**"),
 
-            // TODO: Classify
+            // RESERVED (2 chars)
             '.' if self.is_followed_by(".") => self.add_token(PeriodPeriod, ".."),
             '-' if self.is_followed_by(">") => self.add_token(ForwardArrow, "->"),
 
@@ -105,12 +105,15 @@ impl Tokenizer {
             '^' => self.add_token(Caret, "^"),
             '!' => self.add_token(ExclamationMark, "!"),
 
-            // Design pattern
-            '@' => self.add_token(AtSign, "@"),
+            // Comment
+            '#' => self.add_comment_token(),
 
             // Comparassion
             '>' => self.add_token(Greater, ">"),
             '<' => self.add_token(Less, "<"),
+
+            // Design pattern
+            '@' => self.add_token(AtSign, "@"),
 
             // Math
             '+' => self.add_token(Plus, "+"),
@@ -131,10 +134,9 @@ impl Tokenizer {
             '\n' => self.add_newline_token(),
             '\t' => self.add_indent_token(),
 
-            // TODO: Classify
+            // RESERVED
             '\'' => self.add_character_token(),
             '"' => self.add_string_token(),
-            '#' => self.add_comment_token(),
             '$' => self.add_token(Dollar, "$"),
             '.' => self.add_token(Period, "."),
             ',' => self.add_token(Comma, ","),
