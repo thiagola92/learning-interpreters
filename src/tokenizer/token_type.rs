@@ -22,6 +22,9 @@ pub enum TokenType {
     GreaterGreater,
     LessLess,
 
+    // Comment
+    Comment { content: String },
+
     // Comparassion
     Greater,
     Less,
@@ -65,6 +68,7 @@ pub enum TokenType {
     Set,
     Get,
     Import,
+    As,
 
     // Declaration Modifier
     Static,
@@ -120,6 +124,7 @@ pub enum TokenType {
     Breakpoint,
     Assert,
     Test,
+    Print,
 
     // Type
     Bool,
@@ -130,13 +135,14 @@ pub enum TokenType {
     Void,
 
     // Typecasting
-    As,
-
-    // TODO: Classify
     To,
+
+    // SPECIAL
+    Identifier { name: String },
+    Eof,
+
+    // RESERVED
     With,
-    Print,
-    Comment { content: String },
     Dollar,
     Period,
     Comma,
@@ -146,8 +152,4 @@ pub enum TokenType {
     QuestionMark,
     PeriodPeriod,
     ForwardArrow,
-
-    // Special
-    Identifier { name: String },
-    Eof,
 }

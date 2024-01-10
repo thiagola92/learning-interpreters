@@ -64,6 +64,7 @@ pub fn get_keywords() -> HashMap<String, TokenType> {
         ("breakpoint".to_string(), Breakpoint),
         ("assert".to_string(), Assert),
         ("test".to_string(), Test),
+        ("print".to_string(), Print),
         // Type
         ("bool".to_string(), Bool),
         ("int".to_string(), Int),
@@ -71,9 +72,9 @@ pub fn get_keywords() -> HashMap<String, TokenType> {
         ("char".to_string(), Char),
         ("str".to_string(), Str),
         ("void".to_string(), Void),
-        // TODO: Classify
+        // Typecasting
         ("to".to_string(), To),
+        // RESERVED
         ("with".to_string(), With),
-        ("print".to_string(), Print),
     ])
 }
