@@ -51,3 +51,8 @@ pub fn parser_error(line: usize, message: String) {
     println!("[line {}] Error: {}", line, message);
     unsafe { PARSER_ERROR = true }
 }
+
+pub fn interpreter_error(line: usize, message: String) {
+    println!("[line {}] Error: {}", line, message);
+    unsafe { INTERPRETER_ERROR = true }
+}

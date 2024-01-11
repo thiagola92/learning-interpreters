@@ -8,7 +8,7 @@ equality                -> comparison (("==" | "!=") comparison)*;
 comparison              -> term (("<=" | "=>" | "<" | ">") term)*;
 term                    -> factorization (("+" | "-" | "&" | "|" | "^") factorization)*;
 factorization           -> unary (("\*" | "/" | "%" | "**" | | ">>" | "<<") unary)*;
-unary                   -> ("not" | "-" | "~") unary | primary;
+unary                   -> ("-" | "not" | "!") unary | primary;
 primary                 -> INTEGER | FLOATING | CHARACTER | STRING | BOOLEAN | "null" | "(" expression ")" | IDENTIFIER;
 ```
 

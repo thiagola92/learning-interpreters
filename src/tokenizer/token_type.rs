@@ -84,8 +84,8 @@ pub enum TokenType {
 
     // Literal
     Boolean(bool),
-    Integer(i64),
-    Floating(f64),
+    Integer(i32),
+    Floating(f32),
     Character(char),
     String_(String), // Escape conflict with String
     Null,

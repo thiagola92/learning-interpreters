@@ -4,7 +4,9 @@ mod parser;
 mod tokenizer;
 
 use error::{clear_errors, code_error, ExitCode};
+use interpreter::INTERPRETER;
 use parser::debug::output_tree;
+use parser::expression::Expression;
 use parser::Parser;
 use std::env;
 use std::fs::File;
@@ -94,6 +96,11 @@ fn run(code: String) {
     let tokens: Vec<Token> = Tokenizer::new(code).tokenize();
     println!("{}", output_tokens(&tokens));
 
-    let expressions = Parser::new(tokens).parse();
-    println!("{}", output_tree(expressions));
+    let expressions: Vec<Expression> = Parser::new(tokens).parse();
+    println!("{}", output_tree(&expressions));
+
+    // Temporary
+    for e in expressions {
+        INTERPRETER.interpret(e).unwrap();
+    }
 }
