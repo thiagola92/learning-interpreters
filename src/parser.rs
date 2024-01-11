@@ -64,7 +64,7 @@ impl Parser {
 
     fn comparison(&mut self) -> Result<Expression, ()> {
         let mut expr: Expression = self.term()?;
-        let token_types: Vec<TokenType> = vec![LessEqual, GreaterEqual, Less, Greater];
+        let token_types: Vec<TokenType> = vec![Greater, Less, GreaterEqual, LessEqual];
 
         while self.advance_if_is_any_of(&token_types) {
             let token: Token = self.previous().clone();
@@ -100,7 +100,8 @@ impl Parser {
 
     fn factorization(&mut self) -> Result<Expression, ()> {
         let mut expr: Expression = self.unary()?;
-        let token_types: Vec<TokenType> = vec![Star, Slash, GreaterGreater, LessLess, StarStar];
+        let token_types: Vec<TokenType> =
+            vec![Star, Slash, Percentage, StarStar, GreaterGreater, LessLess];
 
         while self.advance_if_is_any_of(&token_types) {
             let token: Token = self.previous().clone();
@@ -117,7 +118,7 @@ impl Parser {
     }
 
     fn unary(&mut self) -> Result<Expression, ()> {
-        let token_types: Vec<TokenType> = vec![Not, Minus, ExclamationMark];
+        let token_types: Vec<TokenType> = vec![Minus, Not, ExclamationMark];
 
         if self.advance_if_is_any_of(&token_types) {
             let token: Token = self.previous().clone();

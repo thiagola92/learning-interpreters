@@ -1,6 +1,6 @@
 use super::expression::Expression;
 
-pub fn output_tree(tree: Vec<Expression>) -> String {
+pub fn output_tree(tree: &Vec<Expression>) -> String {
     let mut string: String = "\n".to_string();
 
     // Rename 'e' with generic value change.

@@ -272,13 +272,13 @@ impl Tokenizer {
             }
 
             self.tokens.push(Token {
-                token_type: Floating(string.parse::<f64>().unwrap()),
+                token_type: Floating(string.parse::<f32>().unwrap()),
                 lexeme: string,
                 line: self.line,
             })
         } else {
             self.tokens.push(Token {
-                token_type: Integer(string.parse::<i64>().unwrap()),
+                token_type: Integer(string.parse::<i32>().unwrap()),
                 lexeme: string,
                 line: self.line,
             })
