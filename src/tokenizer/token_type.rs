@@ -23,7 +23,7 @@ pub enum TokenType {
     LessLess,
 
     // Comment
-    Comment { content: String },
+    Comment(String),
 
     // Comparassion
     Greater,
@@ -83,11 +83,11 @@ pub enum TokenType {
     AtSign,
 
     // Literal
-    Boolean { content: bool },
-    Integer { content: i64 },
-    Floating { content: f64 },
-    Character { content: char },
-    String_ { content: String }, // Escape conflict with String
+    Boolean(bool),
+    Integer(i64),
+    Floating(f64),
+    Character(char),
+    String_(String), // Escape conflict with String
     Null,
 
     // Logical
@@ -118,7 +118,7 @@ pub enum TokenType {
 
     // Scope
     Newline,
-    Indent { level: i8 },
+    Indent(i8),
 
     // Test
     Breakpoint,
@@ -138,7 +138,7 @@ pub enum TokenType {
     To,
 
     // SPECIAL
-    Identifier { name: String },
+    Identifier(String),
     Eof,
 
     // RESERVED

@@ -49,8 +49,8 @@ pub fn get_keywords() -> HashMap<String, TokenType> {
         ("in".to_string(), In),
         ("when".to_string(), When),
         // Literal
-        ("true".to_string(), Boolean { content: true }),
-        ("false".to_string(), Boolean { content: false }),
+        ("true".to_string(), Boolean(true)),
+        ("false".to_string(), Boolean(false)),
         ("null".to_string(), Null),
         // Logical
         ("not".to_string(), Not),

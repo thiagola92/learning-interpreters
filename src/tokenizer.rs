@@ -41,7 +41,7 @@ impl Tokenizer {
 
     pub fn tokenize(mut self) -> Vec<Token> {
         self.tokens.push(Token {
-            token_type: Indent { level: 0 },
+            token_type: Indent(0),
             lexeme: "".to_string(),
             line: self.line,
         });
@@ -171,27 +171,27 @@ impl Tokenizer {
 
     fn add_newline_token(&mut self) {
         self.add_token(Newline, "\n");
-        self.add_token(Indent { level: 0 }, "");
+        self.add_token(Indent(0), "");
         self.line += 1;
     }
 
     fn add_indent_token(&mut self) {
         if self.tokens.is_empty() {
-            return self.add_token(Indent { level: 1 }, "\t");
+            return self.add_token(Indent(1), "\t");
         }
 
         let last: usize = self.tokens.len() - 1;
         let previous: Token = self.tokens[last].clone();
 
         match previous.token_type {
-            Indent { level } => {
+            Indent(level) => {
                 self.tokens[last] = Token {
-                    token_type: Indent { level: level + 1 },
+                    token_type: Indent(level + 1),
                     lexeme: format!("{}\t", previous.lexeme),
                     line: previous.line,
                 };
             }
-            Newline => self.add_token(Indent { level: 1 }, "\t"),
+            Newline => self.add_token(Indent(1), "\t"),
             _ => (),
         }
     }
@@ -200,9 +200,7 @@ impl Tokenizer {
         match self.advance_until_one_of("\n\0", false) {
             Ok(string) => {
                 self.tokens.push(Token {
-                    token_type: Comment {
-                        content: string.clone(),
-                    },
+                    token_type: Comment(string.clone()),
                     lexeme: format!("#{}", string),
                     line: self.line,
                 });
@@ -223,9 +221,7 @@ impl Tokenizer {
                 self.advance_n(1);
 
                 self.tokens.push(Token {
-                    token_type: String_ {
-                        content: string.clone(),
-                    },
+                    token_type: String_(string.clone()),
                     lexeme: format!("\"{}\"", string),
                     line: self.line,
                 })
@@ -252,7 +248,7 @@ impl Tokenizer {
                 let character: char = string.chars().nth(0).unwrap();
 
                 self.tokens.push(Token {
-                    token_type: Character { content: character },
+                    token_type: Character(character),
                     lexeme: format!("'{}'", character),
                     line: self.line,
                 })
@@ -276,17 +272,13 @@ impl Tokenizer {
             }
 
             self.tokens.push(Token {
-                token_type: Floating {
-                    content: string.parse::<f64>().unwrap(),
-                },
+                token_type: Floating(string.parse::<f64>().unwrap()),
                 lexeme: string,
                 line: self.line,
             })
         } else {
             self.tokens.push(Token {
-                token_type: Integer {
-                    content: string.parse::<i64>().unwrap(),
-                },
+                token_type: Integer(string.parse::<i64>().unwrap()),
                 lexeme: string,
                 line: self.line,
             })
@@ -310,9 +302,7 @@ impl Tokenizer {
             }
             _ => {
                 self.tokens.push(Token {
-                    token_type: Identifier {
-                        name: string.clone(),
-                    },
+                    token_type: Identifier(string.clone()),
                     lexeme: string,
                     line: self.line,
                 });
