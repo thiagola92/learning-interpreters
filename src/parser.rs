@@ -137,13 +137,11 @@ impl Parser {
     fn primary(&mut self) -> Result<Expression, ()> {
         // Ignore the content, we just need a vector with this types.
         let token_types: Vec<TokenType> = vec![
-            Boolean { content: false },
-            Integer { content: 0 },
-            Floating { content: 0.0 },
-            Character { content: '\0' },
-            String_ {
-                content: String::new(),
-            },
+            Boolean(false),
+            Integer(0),
+            Floating(0.0),
+            Character('\0'),
+            String_(String::new()),
             Null,
         ];
 
