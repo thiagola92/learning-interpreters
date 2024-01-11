@@ -3,6 +3,10 @@ Responsible for creating the AST (abstract syntax tree).
 
 # Grammar
 ```
+program                 -> statement* EOF;
+statement               -> expr_stmt | print_stmt;
+print_stmt              -> "print" expression "\n";
+expr_stmt               -> expression "\n";
 expression              -> equality;
 equality                -> comparison (("==" | "!=") comparison)*;
 comparison              -> term (("<=" | "=>" | "<" | ">") term)*;

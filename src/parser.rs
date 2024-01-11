@@ -1,6 +1,7 @@
 pub mod debug;
 pub mod error;
 pub mod expression;
+pub mod statement;
 
 use crate::error::parser_error;
 use crate::tokenizer::token::Token;
@@ -9,6 +10,7 @@ use crate::tokenizer::token_type::TokenType::*;
 use error::*;
 use expression::Expression;
 use expression::Expression::*;
+use statement::Statement;
 use std::mem::discriminant;
 
 pub struct Parser {
@@ -24,20 +26,54 @@ impl Parser {
         }
     }
 
-    pub fn parse(&mut self) -> Vec<Expression> {
-        let mut expressions: Vec<Expression> = Vec::new();
+    pub fn parse(&mut self) -> Vec<Statement> {
+        let mut statements: Vec<Statement> = Vec::new();
 
         // Temporary because we don't have scope yet.
         self.advance();
 
         while !self.is_eof() {
-            match self.expression() {
-                Ok(e) => expressions.push(e),
+            match self.statement() {
+                Ok(s) => statements.push(s),
                 _ => self.synchronize(),
             }
         }
 
-        expressions
+        statements
+    }
+
+    pub fn statement(&mut self) -> Result<Statement, ()> {
+        if self.advance_if_is(&Print) {
+            self.print()
+        } else {
+            self.expression_statement()
+        }
+    }
+
+    fn print(&mut self) -> Result<Statement, ()> {
+        let expr: Expression = self.expression()?;
+
+        if self.advance_if_is(&Newline) {
+            Ok(Statement::Print {
+                expr: Box::new(expr),
+            })
+        } else {
+            parser_error(self.peek().line, EXPECT_NEWLINE.to_string());
+            Err(())
+        }
+    }
+
+    fn expression_statement(&mut self) -> Result<Statement, ()> {
+        let expr: Expression = self.expression()?;
+
+        if self.advance_if_is(&Newline) {
+            Ok(Statement::Expr {
+                expr: Box::new(expr),
+            })
+        } else {
+            parser_error(self.peek().line, EXPECT_NEWLINE.to_string());
+            Err(())
+        }
     }
 
     fn expression(&mut self) -> Result<Expression, ()> {

@@ -4,6 +4,7 @@ mod utility;
 
 use crate::error::interpreter_error;
 use crate::parser::expression::Expression;
+use crate::parser::statement::Statement;
 use crate::tokenizer::token::Token;
 use crate::tokenizer::token_type::TokenType;
 use content::Content;
@@ -17,13 +18,29 @@ pub struct Interpreter {
 }
 
 impl Interpreter {
-    pub fn interpret(&self, expr: Expression) -> Result<Content, ()> {
+    pub fn interpret(&self, statements: Vec<Statement>) {
+        for s in statements {
+            self.statement(s);
+        }
+    }
+
+    fn statement(&self, stmt: Statement) {
+        let _ = match stmt {
+            Statement::Print { expr } => self.print(*expr),
+            Statement::Expr { expr } => self.expression_statement(*expr),
+        };
+    }
+
+    fn print(&self, expr: Expression) {
         match self.evaluate(expr) {
-            Ok(c) => {
-                println!("{}", c.to_string());
-                Ok(c)
-            }
-            _ => Err(()),
+            Ok(c) => println!("{}", c.to_string()),
+            _ => (),
+        }
+    }
+
+    fn expression_statement(&self, expr: Expression) {
+        match self.evaluate(expr) {
+            _ => (),
         }
     }
 
