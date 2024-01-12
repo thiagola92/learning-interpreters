@@ -20,14 +20,15 @@ pub struct Interpreter {
 impl Interpreter {
     pub fn interpret(&self, statements: Vec<Statement>) {
         for s in statements {
-            self.statement(s);
+            self.execute(s);
         }
     }
 
-    fn statement(&self, stmt: Statement) {
+    // Analogue to evaluate() but for statements.
+    fn execute(&self, stmt: Statement) {
         let _ = match stmt {
             Statement::Print { expr } => self.print(*expr),
-            Statement::Expr { expr } => self.expression_statement(*expr),
+            Statement::Expr { expr } => self.expression(*expr),
         };
     }
 
@@ -38,12 +39,13 @@ impl Interpreter {
         }
     }
 
-    fn expression_statement(&self, expr: Expression) {
+    fn expression(&self, expr: Expression) {
         match self.evaluate(expr) {
             _ => (),
         }
     }
 
+    // Analogue to execute() but for expressions.
     fn evaluate(&self, expr: Expression) -> Result<Content, ()> {
         let c: Content = match expr {
             Expression::Literal { token } => Content::from(token.token_type)?,

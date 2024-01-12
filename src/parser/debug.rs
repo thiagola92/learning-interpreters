@@ -1,11 +1,10 @@
-use super::expression::Expression;
+use super::statement::Statement;
 
-pub fn output_tree(tree: &Vec<Expression>) -> String {
+pub fn output_tree(tree: &Vec<Statement>) -> String {
     let mut string: String = "\n".to_string();
 
-    // Rename 'e' with generic value change.
-    for e in tree {
-        string.push_str(e.to_string().as_str());
+    for s in tree {
+        string.push_str(s.to_string().as_str());
         string.push('\n');
     }
 
