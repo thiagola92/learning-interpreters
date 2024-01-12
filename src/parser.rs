@@ -2,16 +2,16 @@ pub mod debug;
 pub mod error;
 pub mod expression;
 pub mod statement;
+pub mod utility;
 
 use crate::error::parser_error;
 use crate::tokenizer::token::Token;
 use crate::tokenizer::token_type::TokenType;
-use crate::tokenizer::token_type::TokenType::*;
 use error::*;
 use expression::Expression;
-use expression::Expression::*;
 use statement::Statement;
 use std::mem::discriminant;
+use utility::*;
 
 pub struct Parser {
     tokens: Vec<Token>,
@@ -33,7 +33,7 @@ impl Parser {
         self.advance();
 
         while !self.is_eof() {
-            match self.statement() {
+            match self.declaration() {
                 Ok(s) => statements.push(s),
                 _ => self.synchronize(),
             }
@@ -42,18 +42,59 @@ impl Parser {
         statements
     }
 
-    pub fn statement(&mut self) -> Result<Statement, ()> {
-        if self.advance_if_is(&Print) {
-            self.print()
+    pub fn declaration(&mut self) -> Result<Statement, ()> {
+        match self.peek().token_type {
+            TokenType::Var => self.var(),
+            _ => self.statement(),
+        }
+    }
+
+    pub fn var(&mut self) -> Result<Statement, ()> {
+        self.advance(); // Consume "var" token.
+
+        if !self.is_token(&IDENTIFIER) {
+            parser_error(self.peek().line, EXPECT_VAR_IDENTIFIER.to_string());
+            return Err(());
+        }
+
+        let var: Statement;
+        let id: Token = self.advance().clone();
+
+        if self.advance_if_is_any_of(&ASSIGNMENTS) {
+            var = Statement::Var {
+                id: id,
+                op: Some(self.previous().clone()),
+                expr: Some(Box::new(self.expression()?)),
+            };
         } else {
-            self.expression_statement()
+            var = Statement::Var {
+                id: id,
+                op: None,
+                expr: None,
+            }
+        }
+
+        if self.advance_if_is(&TokenType::Newline) {
+            Ok(var)
+        } else {
+            parser_error(self.peek().line, EXPECT_NEWLINE.to_string());
+            Err(())
+        }
+    }
+
+    pub fn statement(&mut self) -> Result<Statement, ()> {
+        match self.peek().token_type {
+            TokenType::Print => self.print(),
+            _ => self.expr(),
         }
     }
 
     fn print(&mut self) -> Result<Statement, ()> {
+        self.advance(); // Consume "print" token.
+
         let expr: Expression = self.expression()?;
 
-        if self.advance_if_is(&Newline) {
+        if self.advance_if_is(&TokenType::Newline) {
             Ok(Statement::Print {
                 expr: Box::new(expr),
             })
@@ -63,10 +104,10 @@ impl Parser {
         }
     }
 
-    fn expression_statement(&mut self) -> Result<Statement, ()> {
+    fn expr(&mut self) -> Result<Statement, ()> {
         let expr: Expression = self.expression()?;
 
-        if self.advance_if_is(&Newline) {
+        if self.advance_if_is(&TokenType::Newline) {
             Ok(Statement::Expr {
                 expr: Box::new(expr),
             })
@@ -82,15 +123,14 @@ impl Parser {
 
     fn equality(&mut self) -> Result<Expression, ()> {
         let mut expr: Expression = self.comparison()?;
-        let token_types: Vec<TokenType> = vec![EqualEqual, NotEqual];
 
-        while self.advance_if_is_any_of(&token_types) {
-            let token: Token = self.previous().clone();
+        while self.advance_if_is_any_of(&EQUALITIES) {
+            let op: Token = self.previous().clone();
             let right: Expression = self.comparison()?;
 
-            expr = Binary {
+            expr = Expression::Binary {
                 left: Box::new(expr),
-                token: token,
+                op: op,
                 right: Box::new(right),
             };
         }
@@ -100,15 +140,14 @@ impl Parser {
 
     fn comparison(&mut self) -> Result<Expression, ()> {
         let mut expr: Expression = self.term()?;
-        let token_types: Vec<TokenType> = vec![Greater, Less, GreaterEqual, LessEqual];
 
-        while self.advance_if_is_any_of(&token_types) {
-            let token: Token = self.previous().clone();
+        while self.advance_if_is_any_of(&COMPARASIONS) {
+            let op: Token = self.previous().clone();
             let right: Expression = self.term()?;
 
-            expr = Binary {
+            expr = Expression::Binary {
                 left: Box::new(expr),
-                token: token,
+                op: op,
                 right: Box::new(right),
             };
         }
@@ -118,15 +157,14 @@ impl Parser {
 
     fn term(&mut self) -> Result<Expression, ()> {
         let mut expr: Expression = self.factorization()?;
-        let token_types: Vec<TokenType> = vec![Plus, Minus, Ampersand, Pipe, Caret];
 
-        while self.advance_if_is_any_of(&token_types) {
-            let token: Token = self.previous().clone();
+        while self.advance_if_is_any_of(&TERMS) {
+            let op: Token = self.previous().clone();
             let right: Expression = self.factorization()?;
 
-            expr = Binary {
+            expr = Expression::Binary {
                 left: Box::new(expr),
-                token: token,
+                op: op,
                 right: Box::new(right),
             };
         }
@@ -136,16 +174,14 @@ impl Parser {
 
     fn factorization(&mut self) -> Result<Expression, ()> {
         let mut expr: Expression = self.unary()?;
-        let token_types: Vec<TokenType> =
-            vec![Star, Slash, Percentage, StarStar, GreaterGreater, LessLess];
 
-        while self.advance_if_is_any_of(&token_types) {
-            let token: Token = self.previous().clone();
+        while self.advance_if_is_any_of(&FACTORIZATIONS) {
+            let op: Token = self.previous().clone();
             let right: Expression = self.unary()?;
 
-            expr = Binary {
+            expr = Expression::Binary {
                 left: Box::new(expr),
-                token: token,
+                op: op,
                 right: Box::new(right),
             };
         }
@@ -154,14 +190,12 @@ impl Parser {
     }
 
     fn unary(&mut self) -> Result<Expression, ()> {
-        let token_types: Vec<TokenType> = vec![Minus, Not, ExclamationMark];
-
-        if self.advance_if_is_any_of(&token_types) {
-            let token: Token = self.previous().clone();
+        if self.advance_if_is_any_of(&UNARIES) {
+            let op: Token = self.previous().clone();
             let mut right: Expression = self.unary()?;
 
-            right = Unary {
-                token: token,
+            right = Expression::Unary {
+                op: op,
                 right: Box::new(right),
             };
 
@@ -172,30 +206,20 @@ impl Parser {
     }
 
     fn primary(&mut self) -> Result<Expression, ()> {
-        // Ignore the content, we just need a vector with this types.
-        let token_types: Vec<TokenType> = vec![
-            Boolean(false),
-            Integer(0),
-            Floating(0.0),
-            Character('\0'),
-            String_(String::new()),
-            Null,
-        ];
-
-        if self.advance_if_is_any_of(&token_types) {
-            let expr: Expression = Literal {
+        if self.advance_if_is_any_of(&PRIMARIES) {
+            let expr: Expression = Expression::Literal {
                 token: self.previous().clone(),
             };
 
             Ok(expr)
-        } else if self.advance_if_is(&ParenthesisOpen) {
+        } else if self.advance_if_is(&TokenType::ParenthesisOpen) {
             let mut expr: Expression = self.expression()?;
 
-            expr = Grouping {
+            expr = Expression::Grouping {
                 expr: Box::new(expr),
             };
 
-            if self.advance_if_is(&ParenthesisClose) {
+            if self.advance_if_is(&TokenType::ParenthesisClose) {
                 Ok(expr)
             } else {
                 parser_error(self.peek().line, EXPECT_CLOSE_PARENTHESIS.to_string());
@@ -213,12 +237,11 @@ impl Parser {
         self.advance(); // Skip token that raised error.
 
         while !self.is_eof() {
-            match self.peek().token_type {
-                Var | Const | Enum | Signal | Func | Coro | Struct | Class | Singleton
-                | Interface | Constructor | Destructor | Import | When | AtSign | Assert | Test
-                | Breakpoint => break,
-                _ => self.advance(),
-            };
+            if is_statement(&self.peek().token_type) {
+                break;
+            } else {
+                self.advance();
+            }
         }
     }
 
@@ -251,7 +274,7 @@ impl Parser {
     }
 
     // Advance if current token is any of the tokens, returns if it was.
-    fn advance_if_is_any_of(&mut self, token_types: &Vec<TokenType>) -> bool {
+    fn advance_if_is_any_of(&mut self, token_types: &[TokenType]) -> bool {
         for token_type in token_types {
             if self.advance_if_is(&token_type) {
                 return true;
