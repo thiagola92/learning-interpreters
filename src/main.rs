@@ -97,7 +97,7 @@ fn run(code: String) {
     println!("{}", output_tokens(&tokens));
 
     let statements: Vec<Statement> = Parser::new(tokens).parse();
-    // println!("{}", output_tree(&statements));
+    println!("{}", output_tree(&statements));
 
     INTERPRETER.interpret(statements);
 }
