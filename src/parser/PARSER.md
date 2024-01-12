@@ -3,7 +3,9 @@ Responsible for creating the AST (abstract syntax tree).
 
 # Grammar
 ```
-program                 -> statement* EOF;
+program                 -> declaration* EOF;
+declaration             -> var_decl| statement;
+var_decl                -> "var" IDENTIFIER ("=" expression)? "\n";
 statement               -> expr_stmt | print_stmt;
 print_stmt              -> "print" expression "\n";
 expr_stmt               -> expression "\n";

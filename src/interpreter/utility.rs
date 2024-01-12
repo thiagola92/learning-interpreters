@@ -1,3 +1,5 @@
+// Any logic that helps the interpreter.
+
 use super::content::Content;
 use crate::tokenizer::token_type::TokenType;
 
