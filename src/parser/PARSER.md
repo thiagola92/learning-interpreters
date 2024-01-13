@@ -2,13 +2,24 @@
 Responsible for creating the AST (abstract syntax tree).
 
 # Grammar
+
+### Declarations
 ```
 program                 -> declaration* EOF;
-declaration             -> var_decl| statement;
-var_decl                -> "var" IDENTIFIER ("=" expression)? "\n";
-statement               -> expr_stmt | print_stmt;
-print_stmt              -> "print" expression "\n";
-expr_stmt               -> expression "\n";
+declaration             -> var | var_ass | statement;
+var                     -> "var" IDENTIFIER ("=" expression)? "\n";
+```
+
+### Statements
+```
+statement               -> expr | print;
+print                   -> "print" expression "\n";
+expr                    -> expression "\n";
+```
+
+### Expressions
+```
+assignment              -> IDENTIFIER ("=" | "+=" | "-=" | "*=" | "/=" | "%=" | "**=" | "&=" | "|=" | "^=" | ">>=" | "<<=") expression;
 expression              -> equality;
 equality                -> comparison (("==" | "!=") comparison)*;
 comparison              -> term (("<=" | "=>" | "<" | ">") term)*;

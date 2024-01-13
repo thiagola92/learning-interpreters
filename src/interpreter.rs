@@ -1,4 +1,5 @@
 mod content;
+mod environment;
 mod error;
 mod utility;
 
@@ -8,33 +9,48 @@ use crate::parser::statement::Statement;
 use crate::tokenizer::token::Token;
 use crate::tokenizer::token_type::TokenType;
 use content::Content;
+use environment::Environment;
 use error::*;
 use utility::*;
 
-pub static INTERPRETER: Interpreter = Interpreter {};
-
 pub struct Interpreter {
-    //
+    environment: Environment,
 }
 
 impl Interpreter {
-    pub fn interpret(&self, statements: Vec<Statement>) {
+    pub fn new() -> Interpreter {
+        Interpreter {
+            environment: Environment::new(),
+        }
+    }
+
+    pub fn interpret(&mut self, statements: Vec<Statement>) {
         for s in statements {
             self.execute(s);
         }
     }
 
     // Analogue to evaluate() but for statements.
-    fn execute(&self, stmt: Statement) {
+    fn execute(&mut self, stmt: Statement) {
         let _ = match stmt {
+            Statement::Var { id } => self.var(id), // TODO
+            Statement::VarAss { id, expr } => self.var_ass(id, *expr), // TODO
             Statement::Print { expr } => self.print(*expr),
             Statement::Expr { expr } => self.expression(*expr),
-            Statement::Var {
-                id: _,
-                op: _,
-                expr: _,
-            } => (), // TODO
         };
+    }
+
+    fn var(&mut self, id: Token) {
+        self.environment.define(id.lexeme, Content::Null);
+    }
+
+    fn var_ass(&mut self, id: Token, expr: Expression) {
+        let expr = match self.evaluate(expr) {
+            Ok(c) => c,
+            _ => return,
+        };
+
+        self.environment.define(id.lexeme, expr);
     }
 
     fn print(&self, expr: Expression) {
@@ -54,10 +70,10 @@ impl Interpreter {
     fn evaluate(&self, expr: Expression) -> Result<Content, ()> {
         let c: Content = match expr {
             Expression::Literal { token } => Content::from(token.token_type)?,
+            Expression::Variable { id } => self.environment.get(id)?,
             Expression::Grouping { expr } => self.evaluate(*expr)?,
             Expression::Unary { op, right } => self.unary(op, *right)?,
             Expression::Binary { left, op, right } => self.binary(*left, op, *right)?,
-            Expression::Variable { id: _ } => Content::Null, // TODO
         };
 
         Ok(c)

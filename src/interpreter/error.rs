@@ -1,5 +1,9 @@
 use super::content::Content;
 
+pub fn variable_undefined(name: &str) -> String {
+    format!("Undefined variable '{}'", name)
+}
+
 pub fn unary_unsupported(op: &str, c: &Content) -> String {
     format!("Unsupported operator '{}' for: {}", op, c.type_to_string())
 }
