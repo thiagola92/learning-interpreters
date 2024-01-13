@@ -300,7 +300,7 @@ impl Tokenizer {
                     line: self.line,
                 });
             }
-            _ => {
+            None => {
                 self.tokens.push(Token {
                     token_type: Identifier(string.clone()),
                     lexeme: string,
@@ -344,7 +344,7 @@ impl Tokenizer {
                 self.current += n;
                 c
             }
-            _ => '\0',
+            None => '\0',
         }
     }
 
@@ -377,7 +377,7 @@ impl Tokenizer {
     fn peek_nth(&self, n: usize) -> char {
         match self.source.chars().nth(self.current + n) {
             Some(c) => c,
-            _ => '\0',
+            None => '\0',
         }
     }
 

@@ -4,7 +4,7 @@ mod parser;
 mod tokenizer;
 
 use error::{clear_errors, code_error, ExitCode};
-use interpreter::INTERPRETER;
+use interpreter::Interpreter;
 use parser::debug::output_tree;
 use parser::statement::Statement;
 use parser::Parser;
@@ -53,7 +53,9 @@ fn run_file(filepath: &String) {
         }
     }
 
-    run(code);
+    let mut interpreter = Interpreter::new();
+
+    run(code, &mut interpreter);
 
     match code_error() {
         ExitCode::OK => (),
@@ -62,6 +64,8 @@ fn run_file(filepath: &String) {
 }
 
 fn run_prompt() {
+    let mut interpreter = Interpreter::new();
+
     loop {
         print!("> ");
 
@@ -87,17 +91,17 @@ fn run_prompt() {
             }
         }
 
-        run(code);
+        run(code, &mut interpreter);
         clear_errors();
     }
 }
 
-fn run(code: String) {
+fn run(code: String, interpreter: &mut Interpreter) {
     let tokens: Vec<Token> = Tokenizer::new(code).tokenize();
     println!("{}", output_tokens(&tokens));
 
     let statements: Vec<Statement> = Parser::new(tokens).parse();
     println!("{}", output_tree(&statements));
 
-    INTERPRETER.interpret(statements);
+    interpreter.interpret(statements);
 }

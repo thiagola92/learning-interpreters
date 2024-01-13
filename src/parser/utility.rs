@@ -1,5 +1,3 @@
-// Any logic that helps the parser.
-
 use crate::tokenizer::token_type::TokenType;
 use crate::tokenizer::token_type::TokenType::*;
 
@@ -31,7 +29,7 @@ pub const FACTORIZATIONS: [TokenType; 6] =
 
 pub const UNARIES: [TokenType; 3] = [Minus, Not, ExclamationMark];
 
-pub const PRIMARIES: [TokenType; 6] = [
+pub const LITERALS: [TokenType; 6] = [
     Boolean(false),
     Integer(0),
     Floating(0.0),

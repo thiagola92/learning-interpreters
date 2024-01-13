@@ -60,18 +60,13 @@ impl Parser {
         let var: Statement;
         let id: Token = self.advance().clone();
 
-        if self.advance_if_is_any_of(&ASSIGNMENTS) {
-            var = Statement::Var {
+        if self.advance_if_is(&TokenType::Equal) {
+            var = Statement::VarAss {
                 id: id,
-                op: Some(self.previous().clone()),
-                expr: Some(Box::new(self.expression()?)),
+                expr: Box::new(self.expression()?),
             };
         } else {
-            var = Statement::Var {
-                id: id,
-                op: None,
-                expr: None,
-            }
+            var = Statement::Var { id: id }
         }
 
         if self.advance_if_is(&TokenType::Newline) {
@@ -206,9 +201,15 @@ impl Parser {
     }
 
     fn primary(&mut self) -> Result<Expression, ()> {
-        if self.advance_if_is_any_of(&PRIMARIES) {
+        if self.advance_if_is_any_of(&LITERALS) {
             let expr: Expression = Expression::Literal {
                 token: self.previous().clone(),
+            };
+
+            Ok(expr)
+        } else if self.advance_if_is(&IDENTIFIER) {
+            let expr: Expression = Expression::Variable {
+                id: self.previous().clone(),
             };
 
             Ok(expr)
