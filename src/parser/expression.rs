@@ -1,6 +1,12 @@
 use crate::tokenizer::token::Token;
 
 pub enum Expression {
+    Assignment {
+        id: Token,
+        op: Token,
+        right: Box<Expression>,
+    },
+
     Binary {
         left: Box<Expression>,
         op: Token,
@@ -28,6 +34,9 @@ pub enum Expression {
 impl Expression {
     pub fn to_string(&self) -> String {
         match self {
+            Expression::Assignment { id, op, right } => {
+                format!("({} {} {})", id.lexeme, op.lexeme, right.to_string())
+            }
             Expression::Binary { left, op, right } => {
                 format!("({} {} {})", op.lexeme, left.to_string(), right.to_string())
             }

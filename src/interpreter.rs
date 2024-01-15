@@ -34,59 +34,60 @@ impl Interpreter {
     fn execute(&mut self, stmt: Statement) {
         let _ = match stmt {
             Statement::Var { id } => self.var(id), // TODO
-            Statement::VarAss { id, expr } => self.var_ass(id, *expr), // TODO
+            Statement::VarAssign { id, expr } => self.var_assign(id, *expr), // TODO
             Statement::Print { expr } => self.print(*expr),
             Statement::Expr { expr } => self.expression(*expr),
         };
     }
 
     fn var(&mut self, id: Token) {
-        self.environment.define(id.lexeme, Content::Null);
+        self.environment.define(&id, Content::Null);
     }
 
-    fn var_ass(&mut self, id: Token, expr: Expression) {
+    fn var_assign(&mut self, id: Token, expr: Expression) {
         let expr = match self.evaluate(expr) {
             Ok(c) => c,
             _ => return,
         };
 
-        self.environment.define(id.lexeme, expr);
+        self.environment.define(&id, expr);
     }
 
-    fn print(&self, expr: Expression) {
+    fn print(&mut self, expr: Expression) {
         match self.evaluate(expr) {
             Ok(c) => println!("{}", c.to_string()),
             _ => (),
         }
     }
 
-    fn expression(&self, expr: Expression) {
+    fn expression(&mut self, expr: Expression) {
         match self.evaluate(expr) {
             _ => (),
         }
     }
 
     // Analogue to execute() but for expressions.
-    fn evaluate(&self, expr: Expression) -> Result<Content, ()> {
+    fn evaluate(&mut self, expr: Expression) -> Result<Content, ()> {
         let c: Content = match expr {
             Expression::Literal { token } => Content::from(token.token_type)?,
-            Expression::Variable { id } => self.environment.get(id)?,
+            Expression::Variable { id } => self.environment.get(&id)?,
             Expression::Grouping { expr } => self.evaluate(*expr)?,
             Expression::Unary { op, right } => self.unary(op, *right)?,
             Expression::Binary { left, op, right } => self.binary(*left, op, *right)?,
+            Expression::Assignment { id, op, right } => self.assignment(id, op, *right)?,
         };
 
         Ok(c)
     }
 
-    fn unary(&self, op: Token, right: Expression) -> Result<Content, ()> {
+    fn unary(&mut self, op: Token, right: Expression) -> Result<Content, ()> {
         let content: Content = self.evaluate(right)?;
 
         let c: Content = match op.token_type {
             // Bitwise
-            TokenType::ExclamationMark => self.unary_bit_not(content, op)?,
+            TokenType::ExclamationMark => self.unary_exclamation_mark(content, op)?,
             // Logical
-            TokenType::Not => self.unary_logic_not(content, op)?,
+            TokenType::Not => self.unary_not(content, op)?,
             // Math
             TokenType::Minus => self.unary_minus(content, op)?,
             _ => return Err(()),
@@ -100,7 +101,7 @@ impl Interpreter {
             Content::Integer(i) => Content::Integer(-i),
             Content::Floating(f) => Content::Floating(-f),
             _ => {
-                interpreter_error(op.line, unary_unsupported(&"-", &content));
+                interpreter_error(op.line, unary_unsupported(&op.lexeme, &content));
                 return Err(());
             }
         };
@@ -108,15 +109,15 @@ impl Interpreter {
         Ok(c)
     }
 
-    fn unary_logic_not(&self, content: Content, _op: Token) -> Result<Content, ()> {
+    fn unary_not(&self, content: Content, _op: Token) -> Result<Content, ()> {
         Ok(Content::Boolean(!is_true(content)))
     }
 
-    fn unary_bit_not(&self, content: Content, op: Token) -> Result<Content, ()> {
+    fn unary_exclamation_mark(&self, content: Content, op: Token) -> Result<Content, ()> {
         let c: Content = match content {
             Content::Integer(i) => Content::Integer(!i),
             _ => {
-                interpreter_error(op.line, unary_unsupported(&"!", &content));
+                interpreter_error(op.line, unary_unsupported(&op.lexeme, &content));
                 return Err(());
             }
         };
@@ -124,7 +125,7 @@ impl Interpreter {
         Ok(c)
     }
 
-    fn binary(&self, left: Expression, op: Token, right: Expression) -> Result<Content, ()> {
+    fn binary(&mut self, left: Expression, op: Token, right: Expression) -> Result<Content, ()> {
         let l_content: Content = self.evaluate(left)?;
 
         if is_logic_solved(&op.token_type, &l_content) {
@@ -135,9 +136,11 @@ impl Interpreter {
 
         let c2: Content = match op.token_type {
             // Bitwise
-            TokenType::Ampersand => self.binary_bit_and(l_content, r_content, op)?,
-            TokenType::Pipe => self.binary_bit_or(l_content, r_content, op)?,
-            TokenType::Caret => self.binary_bit_xor(l_content, r_content, op)?,
+            TokenType::Ampersand => self.binary_ampersand(l_content, r_content, op)?,
+            TokenType::Pipe => self.binary_pipe(l_content, r_content, op)?,
+            TokenType::Caret => self.binary_caret(l_content, r_content, op)?,
+            TokenType::GreaterGreater => self.binary_greater_greater(l_content, r_content, op)?,
+            TokenType::LessLess => self.binary_less_less(l_content, r_content, op)?,
             // Comparassion
             TokenType::Greater => self.binary_greater(l_content, r_content, op)?,
             TokenType::Less => self.binary_less(l_content, r_content, op)?,
@@ -161,11 +164,11 @@ impl Interpreter {
         Ok(c2)
     }
 
-    fn binary_bit_and(&self, left: Content, right: Content, op: Token) -> Result<Content, ()> {
+    fn binary_ampersand(&self, left: Content, right: Content, op: Token) -> Result<Content, ()> {
         let c: Content = match (&left, &right) {
             (Content::Integer(i1), Content::Integer(i2)) => Content::Integer(*i1 & *i2),
             _ => {
-                interpreter_error(op.line, binary_unsupported(&"&", &left, &right));
+                interpreter_error(op.line, binary_unsupported(&op.lexeme, &left, &right));
                 return Err(());
             }
         };
@@ -173,11 +176,11 @@ impl Interpreter {
         Ok(c)
     }
 
-    fn binary_bit_or(&self, left: Content, right: Content, op: Token) -> Result<Content, ()> {
+    fn binary_pipe(&self, left: Content, right: Content, op: Token) -> Result<Content, ()> {
         let c: Content = match (&left, &right) {
             (Content::Integer(i1), Content::Integer(i2)) => Content::Integer(*i1 | *i2),
             _ => {
-                interpreter_error(op.line, binary_unsupported(&"|", &left, &right));
+                interpreter_error(op.line, binary_unsupported(&op.lexeme, &left, &right));
                 return Err(());
             }
         };
@@ -185,11 +188,40 @@ impl Interpreter {
         Ok(c)
     }
 
-    fn binary_bit_xor(&self, left: Content, right: Content, op: Token) -> Result<Content, ()> {
+    fn binary_caret(&self, left: Content, right: Content, op: Token) -> Result<Content, ()> {
         let c: Content = match (&left, &right) {
             (Content::Integer(i1), Content::Integer(i2)) => Content::Integer(*i1 ^ *i2),
             _ => {
-                interpreter_error(op.line, binary_unsupported(&"^", &left, &right));
+                interpreter_error(op.line, binary_unsupported(&op.lexeme, &left, &right));
+                return Err(());
+            }
+        };
+
+        Ok(c)
+    }
+
+    fn binary_greater_greater(
+        &self,
+        left: Content,
+        right: Content,
+        op: Token,
+    ) -> Result<Content, ()> {
+        let c: Content = match (&left, &right) {
+            (Content::Integer(i1), Content::Integer(i2)) => Content::Integer(*i1 >> *i2),
+            _ => {
+                interpreter_error(op.line, binary_unsupported(&op.lexeme, &left, &right));
+                return Err(());
+            }
+        };
+
+        Ok(c)
+    }
+
+    fn binary_less_less(&self, left: Content, right: Content, op: Token) -> Result<Content, ()> {
+        let c: Content = match (&left, &right) {
+            (Content::Integer(i1), Content::Integer(i2)) => Content::Integer(*i1 << *i2),
+            _ => {
+                interpreter_error(op.line, binary_unsupported(&op.lexeme, &left, &right));
                 return Err(());
             }
         };
@@ -204,7 +236,7 @@ impl Interpreter {
             (Content::Floating(f1), Content::Integer(i2)) => Content::Boolean(*f1 > (*i2 as f32)),
             (Content::Floating(f1), Content::Floating(f2)) => Content::Boolean(*f1 > *f2),
             _ => {
-                interpreter_error(op.line, binary_unsupported(&">", &left, &right));
+                interpreter_error(op.line, binary_unsupported(&op.lexeme, &left, &right));
                 return Err(());
             }
         };
@@ -219,7 +251,7 @@ impl Interpreter {
             (Content::Floating(f1), Content::Integer(i2)) => Content::Boolean(*f1 < (*i2 as f32)),
             (Content::Floating(f1), Content::Floating(f2)) => Content::Boolean(*f1 < *f2),
             _ => {
-                interpreter_error(op.line, binary_unsupported(&"<", &left, &right));
+                interpreter_error(op.line, binary_unsupported(&op.lexeme, &left, &right));
                 return Err(());
             }
         };
@@ -252,7 +284,7 @@ impl Interpreter {
             (Content::Floating(f1), Content::Integer(i2)) => Content::Boolean(*f1 >= (*i2 as f32)),
             (Content::Floating(f1), Content::Floating(f2)) => Content::Boolean(*f1 >= *f2),
             _ => {
-                interpreter_error(op.line, binary_unsupported(&">=", &left, &right));
+                interpreter_error(op.line, binary_unsupported(&op.lexeme, &left, &right));
                 return Err(());
             }
         };
@@ -267,7 +299,7 @@ impl Interpreter {
             (Content::Floating(f1), Content::Integer(i2)) => Content::Boolean(*f1 <= (*i2 as f32)),
             (Content::Floating(f1), Content::Floating(f2)) => Content::Boolean(*f1 <= *f2),
             _ => {
-                interpreter_error(op.line, binary_unsupported(&"<=", &left, &right));
+                interpreter_error(op.line, binary_unsupported(&op.lexeme, &left, &right));
                 return Err(());
             }
         };
@@ -285,7 +317,7 @@ impl Interpreter {
                 Content::String_(concat_strings(&s1, &s2))
             }
             _ => {
-                interpreter_error(op.line, binary_unsupported(&"+", &left, &right));
+                interpreter_error(op.line, binary_unsupported(&op.lexeme, &left, &right));
                 return Err(());
             }
         };
@@ -300,7 +332,7 @@ impl Interpreter {
             (Content::Floating(f1), Content::Integer(i2)) => Content::Floating(*f1 - (*i2 as f32)),
             (Content::Floating(f1), Content::Floating(f2)) => Content::Floating(*f1 - *f2),
             _ => {
-                interpreter_error(op.line, binary_unsupported(&"-", &left, &right));
+                interpreter_error(op.line, binary_unsupported(&op.lexeme, &left, &right));
                 return Err(());
             }
         };
@@ -315,7 +347,7 @@ impl Interpreter {
             (Content::Floating(f1), Content::Integer(i2)) => Content::Floating(*f1 * (*i2 as f32)),
             (Content::Floating(f1), Content::Floating(f2)) => Content::Floating(*f1 * *f2),
             _ => {
-                interpreter_error(op.line, binary_unsupported(&"*", &left, &right));
+                interpreter_error(op.line, binary_unsupported(&op.lexeme, &left, &right));
                 return Err(());
             }
         };
@@ -330,7 +362,7 @@ impl Interpreter {
             (Content::Floating(f1), Content::Integer(i2)) => Content::Floating(*f1 / (*i2 as f32)),
             (Content::Floating(f1), Content::Floating(f2)) => Content::Floating(*f1 / *f2),
             _ => {
-                interpreter_error(op.line, binary_unsupported(&"/", &left, &right));
+                interpreter_error(op.line, binary_unsupported(&op.lexeme, &left, &right));
                 return Err(());
             }
         };
@@ -345,7 +377,7 @@ impl Interpreter {
             (Content::Floating(f1), Content::Integer(i2)) => Content::Floating(*f1 % (*i2 as f32)),
             (Content::Floating(f1), Content::Floating(f2)) => Content::Floating(*f1 % *f2),
             _ => {
-                interpreter_error(op.line, binary_unsupported(&"%", &left, &right));
+                interpreter_error(op.line, binary_unsupported(&op.lexeme, &left, &right));
                 return Err(());
             }
         };
@@ -372,9 +404,75 @@ impl Interpreter {
                 Content::Floating(f3)
             }
             _ => {
-                interpreter_error(op.line, binary_unsupported(&"**", &left, &right));
+                interpreter_error(op.line, binary_unsupported(&op.lexeme, &left, &right));
                 return Err(());
             }
+        };
+
+        Ok(c)
+    }
+
+    fn assignment(&mut self, id: Token, op: Token, right: Expression) -> Result<Content, ()> {
+        let mut c: Content = self.evaluate(right)?;
+
+        c = match op.token_type {
+            TokenType::Equal => self.environment.assign(&id, c)?,
+            TokenType::PlusEqual => {
+                let left = self.environment.get(&id)?;
+                c = self.binary_plus(left, c, op)?;
+                self.environment.assign(&id, c)?
+            }
+            TokenType::MinusEqual => {
+                let left = self.environment.get(&id)?;
+                c = self.binary_minus(left, c, op)?;
+                self.environment.assign(&id, c)?
+            }
+            TokenType::StarEqual => {
+                let left = self.environment.get(&id)?;
+                c = self.binary_star(left, c, op)?;
+                self.environment.assign(&id, c)?
+            }
+            TokenType::SlashEqual => {
+                let left = self.environment.get(&id)?;
+                c = self.binary_slash(left, c, op)?;
+                self.environment.assign(&id, c)?
+            }
+            TokenType::PercentageEqual => {
+                let left = self.environment.get(&id)?;
+                c = self.binary_percentage(left, c, op)?;
+                self.environment.assign(&id, c)?
+            }
+            TokenType::StarStarEqual => {
+                let left = self.environment.get(&id)?;
+                c = self.binary_starstar(left, c, op)?;
+                self.environment.assign(&id, c)?
+            }
+            TokenType::AmpersandEqual => {
+                let left = self.environment.get(&id)?;
+                c = self.binary_ampersand(left, c, op)?;
+                self.environment.assign(&id, c)?
+            }
+            TokenType::PipeEqual => {
+                let left = self.environment.get(&id)?;
+                c = self.binary_pipe(left, c, op)?;
+                self.environment.assign(&id, c)?
+            }
+            TokenType::CaretEqual => {
+                let left = self.environment.get(&id)?;
+                c = self.binary_caret(left, c, op)?;
+                self.environment.assign(&id, c)?
+            }
+            TokenType::GreaterGreaterEqual => {
+                let left = self.environment.get(&id)?;
+                c = self.binary_greater_greater(left, c, op)?;
+                self.environment.assign(&id, c)?
+            }
+            TokenType::LessLessEqual => {
+                let left = self.environment.get(&id)?;
+                c = self.binary_less_less(left, c, op)?;
+                self.environment.assign(&id, c)?
+            }
+            _ => return Err(()),
         };
 
         Ok(c)

@@ -61,10 +61,10 @@ impl Parser {
         let id: Token = self.advance().clone();
 
         if self.advance_if_is(&TokenType::Equal) {
-            var = Statement::VarAss {
+            var = Statement::VarAssign {
                 id: id,
                 expr: Box::new(self.expression()?),
-            };
+            }
         } else {
             var = Statement::Var { id: id }
         }
@@ -113,7 +113,30 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Result<Expression, ()> {
-        self.equality()
+        self.assignment()
+    }
+
+    fn assignment(&mut self) -> Result<Expression, ()> {
+        let mut expr: Expression = self.equality()?;
+
+        if self.advance_if_is_any_of(&ASSIGNMENTS) {
+            let op: Token = self.previous().clone();
+            let right: Expression = self.assignment()?;
+
+            expr = match expr {
+                Expression::Variable { id } => Expression::Assignment {
+                    id: id,
+                    op: op,
+                    right: Box::new(right),
+                },
+                _ => {
+                    parser_error(op.line, invalid_var_on_assignment(&op.lexeme));
+                    return Err(());
+                }
+            }
+        }
+
+        Ok(expr)
     }
 
     fn equality(&mut self) -> Result<Expression, ()> {

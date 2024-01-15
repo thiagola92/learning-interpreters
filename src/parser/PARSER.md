@@ -6,8 +6,9 @@ Responsible for creating the AST (abstract syntax tree).
 ### Declarations
 ```
 program                 -> declaration* EOF;
-declaration             -> var | var_ass | statement;
-var                     -> "var" IDENTIFIER ("=" expression)? "\n";
+declaration             -> var | var_assign | statement;
+var                     -> "var" IDENTIFIER "\n";
+var_assign              -> "var" IDENTIFIER "=" expression "\n";
 ```
 
 ### Statements
@@ -19,8 +20,8 @@ expr                    -> expression "\n";
 
 ### Expressions
 ```
-assignment              -> IDENTIFIER ("=" | "+=" | "-=" | "*=" | "/=" | "%=" | "**=" | "&=" | "|=" | "^=" | ">>=" | "<<=") expression;
-expression              -> equality;
+expression              -> assignment;
+assignment              -> IDENTIFIER ("=" | "+=" | "-=" | "*=" | "/=" | "%=" | "**=" | "&=" | "|=" | "^=" | ">>=" | "<<=") expression | equality;
 equality                -> comparison (("==" | "!=") comparison)*;
 comparison              -> term (("<=" | "=>" | "<" | ">") term)*;
 term                    -> factorization (("+" | "-" | "&" | "|" | "^") factorization)*;
