@@ -33,9 +33,10 @@ impl Interpreter {
     // Analogue to evaluate() but for statements.
     fn execute(&mut self, stmt: Statement) {
         let _ = match stmt {
-            Statement::Var { id } => self.var(id), // TODO
-            Statement::VarAssign { id, expr } => self.var_assign(id, *expr), // TODO
+            Statement::Var { id } => self.var(id),
+            Statement::VarAssign { id, expr } => self.var_assign(id, *expr),
             Statement::Print { expr } => self.print(*expr),
+            Statement::Block { stmts, lvl: _ } => self.block(stmts),
             Statement::Expr { expr } => self.expression(*expr),
         };
     }
@@ -57,6 +58,19 @@ impl Interpreter {
         match self.evaluate(expr) {
             Ok(c) => println!("{}", c.to_string()),
             _ => (),
+        }
+    }
+
+    fn block(&mut self, stmts: Vec<Statement>) {
+        self.environment = Environment::from(self.environment.clone());
+
+        for stmt in stmts {
+            self.execute(stmt)
+        }
+
+        self.environment = match &self.environment.enclosing {
+            Some(e) => *e.clone(),
+            None => self.environment.clone(),
         }
     }
 

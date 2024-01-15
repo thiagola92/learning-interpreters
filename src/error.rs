@@ -22,6 +22,13 @@ pub static mut TOKENIZER_ERROR: bool = false;
 pub static mut PARSER_ERROR: bool = false;
 pub static mut INTERPRETER_ERROR: bool = false;
 
+pub fn had_error() -> bool {
+    match code_error() {
+        ExitCode::OK => false,
+        _ => true,
+    }
+}
+
 pub fn code_error() -> ExitCode {
     unsafe {
         if TOKENIZER_ERROR || PARSER_ERROR {

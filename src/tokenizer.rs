@@ -40,20 +40,28 @@ impl Tokenizer {
     }
 
     pub fn tokenize(mut self) -> Vec<Token> {
-        self.tokens.push(Token {
-            token_type: Indent(0),
-            lexeme: "".to_string(),
-            line: self.line,
-        });
+        // I don't need this, right?
+        // self.tokens.push(Token {
+        //     token_type: Indent(0),
+        //     lexeme: "\t".to_string(),
+        //     line: self.line,
+        // });
 
         while !self.is_eof() {
             self.start = self.current;
             self.scan_token();
         }
 
+        // Last statements may need to consume a newline.
+        self.tokens.push(Token {
+            token_type: Newline,
+            lexeme: "\n".to_string(),
+            line: self.line,
+        });
+
         self.tokens.push(Token {
             token_type: Eof,
-            lexeme: "".to_string(),
+            lexeme: "EOF".to_string(),
             line: self.line,
         });
 
@@ -171,7 +179,11 @@ impl Tokenizer {
 
     fn add_newline_token(&mut self) {
         self.add_token(Newline, "\n");
-        self.add_token(Indent(0), "");
+
+        if !self.is_line_finished() {
+            self.add_token(Indent(0), "\t");
+        }
+
         self.line += 1;
     }
 
@@ -191,7 +203,11 @@ impl Tokenizer {
                     line: previous.line,
                 };
             }
-            Newline => self.add_token(Indent(1), "\t"),
+            Newline => {
+                if !self.is_line_finished() {
+                    self.add_token(Indent(1), "\t");
+                }
+            }
             _ => (),
         }
     }
@@ -335,6 +351,23 @@ impl Tokenizer {
         self.current += chars.len();
 
         true
+    }
+
+    // Check if there still any important token in current line.
+    fn is_line_finished(&self) -> bool {
+        let mut index: usize = self.current;
+
+        while index < self.source.len() {
+            match self.source.chars().nth(index).unwrap() {
+                '\t' => (),
+                '\n' | '#' => return true,
+                _ => return false,
+            }
+
+            index += 1;
+        }
+
+        return true;
     }
 
     // Return the current char and advance n chars.
