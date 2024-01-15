@@ -118,7 +118,7 @@ pub enum TokenType {
 
     // Scope
     Newline,
-    Indent(i8),
+    Indent(u8),
 
     // Test
     Breakpoint,

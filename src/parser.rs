@@ -29,9 +29,6 @@ impl Parser {
     pub fn parse(&mut self) -> Vec<Statement> {
         let mut statements: Vec<Statement> = Vec::new();
 
-        // Temporary because we don't have scope yet.
-        self.advance();
-
         while !self.is_eof() {
             match self.declaration() {
                 Ok(s) => statements.push(s),
@@ -42,14 +39,14 @@ impl Parser {
         statements
     }
 
-    pub fn declaration(&mut self) -> Result<Statement, ()> {
+    fn declaration(&mut self) -> Result<Statement, ()> {
         match self.peek().token_type {
             TokenType::Var => self.var(),
             _ => self.statement(),
         }
     }
 
-    pub fn var(&mut self) -> Result<Statement, ()> {
+    fn var(&mut self) -> Result<Statement, ()> {
         self.advance(); // Consume "var" token.
 
         if !self.is_token(&IDENTIFIER) {
@@ -77,9 +74,11 @@ impl Parser {
         }
     }
 
-    pub fn statement(&mut self) -> Result<Statement, ()> {
+    fn statement(&mut self) -> Result<Statement, ()> {
         match self.peek().token_type {
             TokenType::Print => self.print(),
+            TokenType::Indent(lvl) => self.block(lvl),
+            TokenType::Newline => self.empty_line(),
             _ => self.expr(),
         }
     }
@@ -97,6 +96,40 @@ impl Parser {
             parser_error(self.peek().line, EXPECT_NEWLINE.to_string());
             Err(())
         }
+    }
+
+    fn block(&mut self, lvl: u8) -> Result<Statement, ()> {
+        self.advance(); // Consume "tab" token.
+
+        let mut statements: Vec<Statement> = Vec::new();
+
+        while !self.is_eof() {
+            match self.peek().token_type {
+                TokenType::Indent(i) => {
+                    if i == lvl {
+                        self.advance();
+                        continue;
+                    } else if i < lvl {
+                        break;
+                    }
+                }
+                _ => (),
+            }
+
+            match self.declaration() {
+                Ok(s) => statements.push(s),
+                _ => self.synchronize(),
+            }
+        }
+
+        Ok(Statement::Block {
+            stmts: statements,
+            lvl: lvl,
+        })
+    }
+
+    fn empty_line(&mut self) -> Result<Statement, ()> {
+        Err(()) // Force synchronization to an useful line.
     }
 
     fn expr(&mut self) -> Result<Statement, ()> {
@@ -274,9 +307,12 @@ impl Parser {
         !self.is_eof() && discriminant(&self.peek().token_type) == discriminant(token_type)
     }
 
-    // Check if reached/passed EOF.
+    // Check if reached EOF.
     fn is_eof(&self) -> bool {
-        self.current >= self.tokens.len()
+        match self.peek().token_type {
+            TokenType::Eof => true,
+            _ => false,
+        }
     }
 
     // Return the current token and advance to next token.

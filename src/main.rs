@@ -3,7 +3,7 @@ mod interpreter;
 mod parser;
 mod tokenizer;
 
-use error::{clear_errors, code_error, ExitCode};
+use error::{clear_errors, code_error, had_error, ExitCode};
 use interpreter::Interpreter;
 use parser::debug::output_tree;
 use parser::statement::Statement;
@@ -20,10 +20,10 @@ fn main() {
     let args: Vec<String> = env::args().collect();
 
     if args.len() > 2 {
-        println!("Usage: seth [file]");
+        println!("Usage: learning-interpreters [file]");
         process::exit(ExitCode::USAGE as i32)
     } else if args.len() == 2 {
-        run_file(&args[0])
+        run_file(&args[1])
     } else {
         run_prompt();
     }
@@ -100,8 +100,16 @@ fn run(code: String, interpreter: &mut Interpreter) {
     let tokens: Vec<Token> = Tokenizer::new(code).tokenize();
     println!("{}", output_tokens(&tokens));
 
+    if had_error() {
+        return;
+    }
+
     let statements: Vec<Statement> = Parser::new(tokens).parse();
     println!("{}", output_tree(&statements));
+
+    if had_error() {
+        return;
+    }
 
     interpreter.interpret(statements);
 }
