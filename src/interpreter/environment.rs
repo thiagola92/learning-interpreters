@@ -18,17 +18,27 @@ impl Environment {
         }
     }
 
-    pub fn define(&mut self, name: String, value: Content) {
-        self.values.insert(name, value);
-    }
-
-    pub fn get(&self, token: Token) -> Result<Content, ()> {
+    pub fn get(&self, token: &Token) -> Result<Content, ()> {
         match self.values.get(&token.lexeme) {
             Some(v) => Ok(v.clone()),
             None => {
                 interpreter_error(token.line, variable_undefined(&token.lexeme.to_string()));
                 Err(())
             }
+        }
+    }
+
+    pub fn define(&mut self, token: &Token, value: Content) {
+        self.values.insert(token.lexeme.clone(), value);
+    }
+
+    pub fn assign(&mut self, token: &Token, value: Content) -> Result<Content, ()> {
+        if self.values.contains_key(&token.lexeme) {
+            self.values.insert(token.lexeme.clone(), value);
+            Ok(Content::Null)
+        } else {
+            interpreter_error(token.line, variable_undefined(&token.lexeme.to_string()));
+            Err(())
         }
     }
 }
