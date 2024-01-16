@@ -20,7 +20,7 @@ fn main() {
     let args: Vec<String> = env::args().collect();
 
     if args.len() > 2 {
-        println!("Usage: learning-interpreters [file]");
+        println!("Usage: lai [file]");
         process::exit(ExitCode::USAGE as i32)
     } else if args.len() == 2 {
         run_file(&args[1])

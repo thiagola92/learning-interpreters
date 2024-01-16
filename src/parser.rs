@@ -55,15 +55,17 @@ impl Parser {
         }
 
         let var: Statement;
-        let id: Token = self.advance().clone();
+        let identifier: Token = self.advance().clone();
 
         if self.advance_if_is(&TokenType::Equal) {
             var = Statement::VarAssign {
-                id: id,
+                identifier: identifier,
                 expr: Box::new(self.expression()?),
             }
         } else {
-            var = Statement::Var { id: id }
+            var = Statement::Var {
+                identifier: identifier,
+            }
         }
 
         if self.advance_if_is(&TokenType::Newline) {
@@ -77,7 +79,7 @@ impl Parser {
     fn statement(&mut self) -> Result<Statement, ()> {
         match self.peek().token_type {
             TokenType::Print => self.print(),
-            TokenType::Indent(lvl) => self.block(lvl),
+            TokenType::Indent(level) => self.block(level),
             TokenType::Newline => self.empty_line(),
             _ => self.expr(),
         }
@@ -98,7 +100,7 @@ impl Parser {
         }
     }
 
-    fn block(&mut self, lvl: u8) -> Result<Statement, ()> {
+    fn block(&mut self, level: u8) -> Result<Statement, ()> {
         self.advance(); // Consume "tab" token.
 
         let mut statements: Vec<Statement> = Vec::new();
@@ -106,11 +108,14 @@ impl Parser {
         while !self.is_eof() {
             match self.peek().token_type {
                 TokenType::Indent(i) => {
-                    if i == lvl {
+                    if i == level {
                         self.advance();
-                        continue;
-                    } else if i < lvl {
-                        break;
+                        continue; // To check EOF again.
+                    } else if i < level {
+                        break; // Leave scope.
+                    } else {
+                        // You don't have to do anything, recursion
+                        // will bring you to this function with level+1.
                     }
                 }
                 _ => (),
@@ -124,12 +129,13 @@ impl Parser {
 
         Ok(Statement::Block {
             stmts: statements,
-            lvl: lvl,
+            level: level,
         })
     }
 
     fn empty_line(&mut self) -> Result<Statement, ()> {
-        Err(()) // Force synchronization to an useful line.
+        // Force synchronization to an useful line (or same line if there is still code in it).
+        Err(())
     }
 
     fn expr(&mut self) -> Result<Statement, ()> {

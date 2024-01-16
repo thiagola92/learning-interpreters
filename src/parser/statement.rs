@@ -2,27 +2,39 @@ use super::expression::Expression;
 use crate::tokenizer::token::Token;
 
 pub enum Statement {
-    Var { id: Token },
+    Var {
+        identifier: Token,
+    },
 
-    VarAssign { id: Token, expr: Box<Expression> },
+    VarAssign {
+        identifier: Token,
+        expr: Box<Expression>,
+    },
 
-    Print { expr: Box<Expression> },
+    Print {
+        expr: Box<Expression>,
+    },
 
-    Block { stmts: Vec<Statement>, lvl: u8 },
+    Block {
+        stmts: Vec<Statement>,
+        level: u8,
+    },
 
-    Expr { expr: Box<Expression> },
+    Expr {
+        expr: Box<Expression>,
+    },
 }
 
 impl Statement {
     pub fn to_string(&self) -> String {
         match self {
-            Statement::Var { id } => format!("(var {})", id.lexeme),
-            Statement::VarAssign { id, expr } => {
-                format!("(var {} {})", id.lexeme, expr.to_string())
+            Statement::Var { identifier } => format!("(var {})", identifier.lexeme),
+            Statement::VarAssign { identifier, expr } => {
+                format!("(var {} {})", identifier.lexeme, expr.to_string())
             }
             Statement::Print { expr } => format!("(print {})", (*expr).to_string()),
-            Statement::Block { stmts, lvl } => {
-                let tabs: String = "\t".repeat((*lvl) as usize);
+            Statement::Block { stmts, level } => {
+                let tabs: String = "\t".repeat((*level) as usize);
                 let mut block: String = format!("(block");
 
                 for stmt in stmts {
