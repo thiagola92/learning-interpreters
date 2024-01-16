@@ -33,10 +33,10 @@ impl Interpreter {
     // Analogue to evaluate() but for statements.
     fn execute(&mut self, stmt: Statement) {
         let _ = match stmt {
-            Statement::Var { id } => self.var(id),
-            Statement::VarAssign { id, expr } => self.var_assign(id, *expr),
+            Statement::Var { identifier } => self.var(identifier),
+            Statement::VarAssign { identifier, expr } => self.var_assign(identifier, *expr),
             Statement::Print { expr } => self.print(*expr),
-            Statement::Block { stmts, lvl: _ } => self.block(stmts),
+            Statement::Block { stmts, level: _ } => self.block(stmts),
             Statement::Expr { expr } => self.expression(*expr),
         };
     }
