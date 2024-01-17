@@ -23,7 +23,9 @@ expr                    -> expression "\n";
 ### Expressions
 ```
 expression              -> assignment;
-assignment              -> IDENTIFIER ("=" | "+=" | "-=" | "*=" | "/=" | "%=" | "**=" | "&=" | "|=" | "^=" | ">>=" | "<<=") expression | equality;
+assignment              -> IDENTIFIER ("=" | "+=" | "-=" | "*=" | "/=" | "%=" | "**=" | "&=" | "|=" | "^=" | ">>=" | "<<=") expression | or;
+or                      -> and ("or" logic_and)*;
+and                     -> equality ("and" equality)*;
 equality                -> comparison (("==" | "!=") comparison)*;
 comparison              -> term (("<=" | "=>" | "<" | ">") term)*;
 term                    -> factorization (("+" | "-" | "&" | "|" | "^") factorization)*;

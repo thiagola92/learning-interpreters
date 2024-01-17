@@ -66,7 +66,7 @@ impl Interpreter {
     fn if_(&mut self, condition: Expression, statement: Statement) {
         match self.evaluate(condition) {
             Ok(c) => {
-                if is_true(c) {
+                if is_true(&c) {
                     self.execute(statement)
                 }
             }
@@ -82,7 +82,7 @@ impl Interpreter {
     ) {
         match self.evaluate(condition) {
             Ok(c) => {
-                if is_true(c) {
+                if is_true(&c) {
                     self.execute(if_statement)
                 } else {
                     self.execute(else_statement)
@@ -126,6 +126,7 @@ impl Interpreter {
             Expression::Grouping { expr } => self.evaluate(*expr)?,
             Expression::Unary { op, right } => self.unary(op, *right)?,
             Expression::Binary { left, op, right } => self.binary(*left, op, *right)?,
+            Expression::Logical { left, op, right } => self.logical(*left, op, *right)?,
             Expression::Assignment { id, op, right } => self.assignment(id, op, *right)?,
         };
 
@@ -162,7 +163,7 @@ impl Interpreter {
     }
 
     fn unary_not(&self, content: Content, _op: Token) -> Result<Content, ()> {
-        Ok(Content::Boolean(!is_true(content)))
+        Ok(Content::Boolean(!is_true(&content)))
     }
 
     fn unary_exclamation_mark(&self, content: Content, op: Token) -> Result<Content, ()> {
@@ -179,11 +180,6 @@ impl Interpreter {
 
     fn binary(&mut self, left: Expression, op: Token, right: Expression) -> Result<Content, ()> {
         let l_content: Content = self.evaluate(left)?;
-
-        if is_logic_solved(&op.token_type, &l_content) {
-            return Ok(l_content);
-        }
-
         let r_content: Content = self.evaluate(right)?;
 
         let c2: Content = match op.token_type {
@@ -200,9 +196,6 @@ impl Interpreter {
             TokenType::NotEqual => self.binary_not_equal(l_content, r_content, op)?,
             TokenType::GreaterEqual => self.binary_greater_equal(l_content, r_content, op)?,
             TokenType::LessEqual => self.binary_less_equal(l_content, r_content, op)?,
-            // Logical
-            TokenType::And => r_content,
-            TokenType::Or => r_content,
             // Math
             TokenType::Plus => self.binary_plus(l_content, r_content, op)?,
             TokenType::Minus => self.binary_minus(l_content, r_content, op)?,
@@ -459,6 +452,30 @@ impl Interpreter {
                 interpreter_error(op.line, binary_unsupported(&op.lexeme, &left, &right));
                 return Err(());
             }
+        };
+
+        Ok(c)
+    }
+
+    fn logical(&mut self, left: Expression, op: Token, right: Expression) -> Result<Content, ()> {
+        let mut c: Content = self.evaluate(left)?;
+
+        c = match op.token_type {
+            TokenType::Or => {
+                if is_true(&c) {
+                    c
+                } else {
+                    self.evaluate(right)?
+                }
+            }
+            TokenType::And => {
+                if !is_true(&c) {
+                    c
+                } else {
+                    self.evaluate(right)?
+                }
+            }
+            _ => return Err(()),
         };
 
         Ok(c)
