@@ -78,10 +78,42 @@ impl Parser {
 
     fn statement(&mut self) -> Result<Statement, ()> {
         match self.peek().token_type {
+            TokenType::If => self.if_(),
             TokenType::Print => self.print(),
             TokenType::Indent(level) => self.block(level),
             TokenType::Newline => self.empty_line(),
             _ => self.expr(),
+        }
+    }
+
+    fn if_(&mut self) -> Result<Statement, ()> {
+        self.advance(); // Consume "if" token.
+
+        let condition: Expression = self.expression()?;
+
+        if !self.advance_if_is(&TokenType::Colon) {
+            parser_error(self.peek().line, EXPECT_COLON.to_string());
+            return Err(());
+        }
+
+        if !self.advance_if_is(&TokenType::Newline) {
+            parser_error(self.peek().line, EXPECT_NEWLINE.to_string());
+            return Err(());
+        }
+
+        let if_statement = self.statement()?;
+
+        if !self.advance_if_is(&TokenType::Else) {
+            Ok(Statement::If {
+                condition: Box::new(condition),
+                statement: Box::new(if_statement),
+            })
+        } else {
+            Ok(Statement::IfElse {
+                condition: Box::new(condition),
+                if_statement: Box::new(if_statement),
+                else_statement: Box::new(self.statement()?),
+            })
         }
     }
 

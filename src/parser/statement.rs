@@ -20,6 +20,17 @@ pub enum Statement {
         level: u8,
     },
 
+    If {
+        condition: Box<Expression>,
+        statement: Box<Statement>,
+    },
+
+    IfElse {
+        condition: Box<Expression>,
+        if_statement: Box<Statement>,
+        else_statement: Box<Statement>,
+    },
+
     Expr {
         expr: Box<Expression>,
     },
@@ -44,6 +55,20 @@ impl Statement {
                 block.push_str(format!(")").as_str());
                 block
             }
+            Statement::If {
+                condition,
+                statement,
+            } => format!("(if {} {})", condition.to_string(), statement.to_string()),
+            Self::IfElse {
+                condition,
+                if_statement,
+                else_statement,
+            } => format!(
+                "(if {} {} else {})",
+                condition.to_string(),
+                if_statement.to_string(),
+                else_statement.to_string()
+            ),
             Statement::Expr { expr } => format!("(expr {})", (*expr).to_string()),
         }
     }
