@@ -119,6 +119,7 @@ pub enum TokenType {
     // Scope
     Newline,
     Indent(u8),
+    Colon,
 
     // Test
     Breakpoint,
@@ -146,7 +147,6 @@ pub enum TokenType {
     Dollar,
     Period,
     Comma,
-    Colon,
     Semicolon,
     Underscore,
     QuestionMark,

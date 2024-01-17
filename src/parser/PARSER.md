@@ -13,7 +13,8 @@ var_assign              -> "var" IDENTIFIER "=" expression "\n";
 
 ### Statements
 ```
-statement               -> expr | print | block;
+statement               -> if | print | block | expr;
+if                      -> "if" expression ":" "\n" statement ("else" statement)?;
 print                   -> "print" expression "\n";
 block                   -> INDENT declaration*;
 expr                    -> expression "\n";

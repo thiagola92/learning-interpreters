@@ -35,6 +35,15 @@ impl Interpreter {
         let _ = match stmt {
             Statement::Var { identifier } => self.var(identifier),
             Statement::VarAssign { identifier, expr } => self.var_assign(identifier, *expr),
+            Statement::If {
+                condition,
+                statement,
+            } => self.if_(*condition, *statement),
+            Statement::IfElse {
+                condition,
+                if_statement,
+                else_statement,
+            } => self.if_else(*condition, *if_statement, *else_statement),
             Statement::Print { expr } => self.print(*expr),
             Statement::Block { stmts, level: _ } => self.block(stmts),
             Statement::Expr { expr } => self.expression(*expr),
@@ -52,6 +61,35 @@ impl Interpreter {
         };
 
         self.environment.define(&id, expr);
+    }
+
+    fn if_(&mut self, condition: Expression, statement: Statement) {
+        match self.evaluate(condition) {
+            Ok(c) => {
+                if is_true(c) {
+                    self.execute(statement)
+                }
+            }
+            _ => (),
+        }
+    }
+
+    fn if_else(
+        &mut self,
+        condition: Expression,
+        if_statement: Statement,
+        else_statement: Statement,
+    ) {
+        match self.evaluate(condition) {
+            Ok(c) => {
+                if is_true(c) {
+                    self.execute(if_statement)
+                } else {
+                    self.execute(else_statement)
+                }
+            }
+            _ => (),
+        }
     }
 
     fn print(&mut self, expr: Expression) {
