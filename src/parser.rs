@@ -103,18 +103,33 @@ impl Parser {
 
         let if_statement = self.statement()?;
 
+        if !self.advance_if_is(&INDENT) {
+            parser_error(self.peek().line, EXPECT_INDENT.to_string());
+            return Err(());
+        }
+
         if !self.advance_if_is(&TokenType::Else) {
-            Ok(Statement::If {
+            return Ok(Statement::If {
                 condition: Box::new(condition),
                 statement: Box::new(if_statement),
-            })
-        } else {
-            Ok(Statement::IfElse {
-                condition: Box::new(condition),
-                if_statement: Box::new(if_statement),
-                else_statement: Box::new(self.statement()?),
-            })
+            });
         }
+
+        if !self.advance_if_is(&TokenType::Colon) {
+            parser_error(self.peek().line, EXPECT_COLON.to_string());
+            return Err(());
+        }
+
+        if !self.advance_if_is(&TokenType::Newline) {
+            parser_error(self.peek().line, EXPECT_NEWLINE.to_string());
+            return Err(());
+        }
+
+        Ok(Statement::IfElse {
+            condition: Box::new(condition),
+            if_statement: Box::new(if_statement),
+            else_statement: Box::new(self.statement()?),
+        })
     }
 
     fn print(&mut self) -> Result<Statement, ()> {
@@ -141,13 +156,10 @@ impl Parser {
             match self.peek().token_type {
                 TokenType::Indent(i) => {
                     if i == level {
-                        self.advance();
-                        continue; // To check EOF again.
+                        self.advance(); // Consume "tab" token.
+                        continue; // Continue scope.
                     } else if i < level {
                         break; // Leave scope.
-                    } else {
-                        // You don't have to do anything, recursion
-                        // will bring you to this function with level+1.
                     }
                 }
                 _ => (),
@@ -188,7 +200,7 @@ impl Parser {
     }
 
     fn assignment(&mut self) -> Result<Expression, ()> {
-        let mut expr: Expression = self.equality()?;
+        let mut expr: Expression = self.or()?;
 
         if self.advance_if_is_any_of(&ASSIGNMENTS) {
             let op: Token = self.previous().clone();
@@ -205,6 +217,40 @@ impl Parser {
                     return Err(());
                 }
             }
+        }
+
+        Ok(expr)
+    }
+
+    fn or(&mut self) -> Result<Expression, ()> {
+        let mut expr: Expression = self.and()?;
+
+        if self.advance_if_is(&TokenType::Or) {
+            let op: Token = self.previous().clone();
+            let right: Expression = self.and()?;
+
+            expr = Expression::Logical {
+                left: Box::new(expr),
+                op: op,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    fn and(&mut self) -> Result<Expression, ()> {
+        let mut expr: Expression = self.equality()?;
+
+        if self.advance_if_is(&TokenType::And) {
+            let op: Token = self.previous().clone();
+            let right: Expression = self.equality()?;
+
+            expr = Expression::Logical {
+                left: Box::new(expr),
+                op: op,
+                right: Box::new(right),
+            };
         }
 
         Ok(expr)

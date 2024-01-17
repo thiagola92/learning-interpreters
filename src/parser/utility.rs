@@ -3,6 +3,8 @@ use crate::tokenizer::token_type::TokenType::*;
 
 pub const IDENTIFIER: TokenType = Identifier(String::new());
 
+pub const INDENT: TokenType = Indent(0);
+
 pub const ASSIGNMENTS: [TokenType; 12] = [
     Equal,
     PlusEqual,
@@ -41,7 +43,8 @@ pub const LITERALS: [TokenType; 6] = [
 pub fn is_statement(token_type: &TokenType) -> bool {
     match token_type {
         Var | Const | Enum | Signal | Func | Coro | Struct | Class | Singleton | Interface
-        | Constructor | Destructor | Import | When | AtSign | Assert | Test | Breakpoint => true,
+        | Constructor | Destructor | Import | Static | Public | When | AtSign | Breakpoint
+        | Assert | Test | Print => true,
         _ => false,
     }
 }

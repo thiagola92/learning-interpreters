@@ -40,6 +40,13 @@ impl Tokenizer {
     }
 
     pub fn tokenize(mut self) -> Vec<Token> {
+        // Force all code be in scope 0.
+        self.tokens.push(Token {
+            token_type: Indent(0),
+            lexeme: "\t".to_string(),
+            line: self.line,
+        });
+
         while !self.is_eof() {
             self.start = self.current;
             self.scan_token();

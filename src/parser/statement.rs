@@ -46,7 +46,7 @@ impl Statement {
             Statement::Print { expr } => format!("(print {})", (*expr).to_string()),
             Statement::Block { stmts, level } => {
                 let tabs: String = "\t".repeat((*level) as usize);
-                let mut block: String = format!("(block");
+                let mut block: String = format!("(block-{}", *level);
 
                 for stmt in stmts {
                     block.push_str(format!("\n{}{}", tabs, stmt.to_string()).as_str());

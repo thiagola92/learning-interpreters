@@ -7,6 +7,12 @@ pub enum Expression {
         right: Box<Expression>,
     },
 
+    Logical {
+        left: Box<Expression>,
+        op: Token,
+        right: Box<Expression>,
+    },
+
     Binary {
         left: Box<Expression>,
         op: Token,
@@ -36,6 +42,9 @@ impl Expression {
         match self {
             Expression::Assignment { id, op, right } => {
                 format!("({} {} {})", id.lexeme, op.lexeme, right.to_string())
+            }
+            Expression::Logical { left, op, right } => {
+                format!("({} {} {})", op.lexeme, left.to_string(), right.to_string())
             }
             Expression::Binary { left, op, right } => {
                 format!("({} {} {})", op.lexeme, left.to_string(), right.to_string())
