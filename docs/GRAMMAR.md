@@ -1,5 +1,6 @@
 # Grammar
 
+```
 program                 -> declaration* EOF;
 declaration             -> var_declaration | statement;
 var_declaration         -> "var" IDENTIFIER ("=" expression)? "\n";
@@ -15,6 +16,7 @@ term                    -> factorization (("+" | "-" | "&" | "|" | "^") factoriz
 factorization           -> unary (("\*" | "/" | "%" | "**" | | ">>" | "<<") unary)*;
 unary                   -> ("not" | "-" | "~") unary | primary;
 primary                 -> INTEGER | FLOATING | CHARACTER | STRING | "true" | "false" | "null" | "(" expression ")" | IDENTIFIER;
+```
 
 ## References
 https://en.wikipedia.org/wiki/Equality_(mathematics)  
