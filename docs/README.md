@@ -1,3 +1,0 @@
-- [Tokens](./TOKENS.md)
-- [Grammer](./GRAMMAR.md)
-- [Documentation](./LANGUAGE.md)

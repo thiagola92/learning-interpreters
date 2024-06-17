@@ -1,6 +1,17 @@
-use crate::error::{parser_error, EXPECT_CLOSE_PARENTHESIS, EXPECT_EXPRESSION, EXPECT_NEWLINE};
-use crate::expression::{Expression, Statement};
-use crate::token::{Token, TokenType, TokenType::*};
+pub mod debug;
+pub mod error;
+pub mod expression;
+pub mod statement;
+pub mod utility;
+
+use crate::error::parser_error;
+use crate::tokenizer::token::Token;
+use crate::tokenizer::token_type::TokenType;
+use error::*;
+use expression::Expression;
+use statement::Statement;
+use std::mem::discriminant;
+use utility::*;
 
 pub struct Parser {
     tokens: Vec<Token>,
@@ -19,221 +30,409 @@ impl Parser {
         let mut statements: Vec<Statement> = Vec::new();
 
         while !self.is_eof() {
-            match self.statement() {
+            match self.declaration() {
                 Ok(s) => statements.push(s),
-                _ => (),
-            };
+                _ => self.synchronize(),
+            }
         }
 
         statements
     }
 
-    fn statement(&mut self) -> Result<Statement, ()> {
-        // TODO: check statement and decide action.
-        // if self.any(vec![Comment]) {
-
-        // }
-        self.expression_statement()
+    fn declaration(&mut self) -> Result<Statement, ()> {
+        match self.peek().token_type {
+            TokenType::Var => self.var(),
+            _ => self.statement(),
+        }
     }
 
-    fn expression_statement(&mut self) -> Result<Statement, ()> {
-        let exp: Expression = self.expression()?;
+    fn var(&mut self) -> Result<Statement, ()> {
+        self.advance(); // Consume "var" token.
 
-        self.consume(Newline, EXPECT_NEWLINE)?;
-
-        Ok(Statement::ExpressionStatement { exp: Box::new(exp) })
-    }
-
-    fn expression(&mut self) -> Result<Expression, ()> {
-        self.equality()
-    }
-
-    fn equality(&mut self) -> Result<Expression, ()> {
-        let mut exp: Expression = match self.comparison() {
-            Ok(e) => e,
-            _ => return Err(()),
-        };
-
-        while self.any(vec![EqualEqual, NotEqual]) {
-            let op: Token = self.previous().clone();
-
-            exp = match self.comparison() {
-                Ok(e) => Expression::Binary {
-                    left: Box::new(exp),
-                    token: op,
-                    right: Box::new(e),
-                },
-                _ => return Err(()),
-            }
+        if !self.is_token(&IDENTIFIER) {
+            parser_error(self.peek().line, EXPECT_VAR_IDENTIFIER.to_string());
+            return Err(());
         }
 
-        Ok(exp)
-    }
+        let var: Statement;
+        let identifier: Token = self.advance().clone();
 
-    fn comparison(&mut self) -> Result<Expression, ()> {
-        let mut exp: Expression = match self.term() {
-            Ok(e) => e,
-            _ => return Err(()),
-        };
-
-        while self.any(vec![LessEqual, GreaterEqual, Less, Greater]) {
-            let op: Token = self.previous().clone();
-
-            exp = match self.term() {
-                Ok(e) => Expression::Binary {
-                    left: Box::new(exp),
-                    token: op,
-                    right: Box::new(e),
-                },
-                _ => return Err(()),
-            }
-        }
-
-        Ok(exp)
-    }
-
-    fn term(&mut self) -> Result<Expression, ()> {
-        let mut exp: Expression = match self.factorization() {
-            Ok(e) => e,
-            _ => return Err(()),
-        };
-
-        while self.any(vec![Plus, Minus, Ampersand, Pipe, Caret]) {
-            let op: Token = self.previous().clone();
-
-            exp = match self.factorization() {
-                Ok(e) => Expression::Binary {
-                    left: Box::new(exp),
-                    token: op,
-                    right: Box::new(e),
-                },
-                _ => return Err(()),
-            }
-        }
-
-        Ok(exp)
-    }
-
-    fn factorization(&mut self) -> Result<Expression, ()> {
-        let mut exp: Expression = match self.unary() {
-            Ok(e) => e,
-            _ => return Err(()),
-        };
-
-        while self.any(vec![Star, Slash, GreaterGreater, LessLess, StarStar]) {
-            let op: Token = self.previous().clone();
-
-            exp = match self.unary() {
-                Ok(e) => Expression::Binary {
-                    left: Box::new(exp),
-                    token: op,
-                    right: Box::new(e),
-                },
-                _ => return Err(()),
-            }
-        }
-
-        Ok(exp)
-    }
-
-    fn unary(&mut self) -> Result<Expression, ()> {
-        if self.any(vec![Not, Minus, ExclamationMark]) {
-            let op: Token = self.previous().clone();
-
-            match self.unary() {
-                Ok(e) => Ok(Expression::Unary {
-                    token: op,
-                    exp: Box::new(e),
-                }),
-                _ => Err(()),
+        if self.advance_if_is(&TokenType::Equal) {
+            var = Statement::VarAssign {
+                identifier: identifier,
+                expr: Box::new(self.expression()?),
             }
         } else {
-            self.primary()
-        }
-    }
-
-    fn primary(&mut self) -> Result<Expression, ()> {
-        if self.any(vec![
-            True, False, Integer, Floating, Character, String_, Null,
-        ]) {
-            return Ok(Expression::Literal {
-                content: self.previous().content.clone(),
-            });
-        }
-
-        if self.any(vec![ParenthesisOpen]) {
-            let exp: Expression = match self.expression() {
-                Ok(e) => e,
-                _ => return Err(()),
-            };
-
-            match self.consume(ParenthesisClose, EXPECT_CLOSE_PARENTHESIS) {
-                Ok(..) => return Ok(Expression::Grouping { exp: Box::new(exp) }),
-                _ => return Err(()),
-            };
-        }
-
-        parser_error(self.peek(), EXPECT_EXPRESSION);
-
-        Err(())
-    }
-
-    // Check if next token is any of the options in the vector.
-    fn any(&mut self, types: Vec<TokenType>) -> bool {
-        for token_type in types.iter() {
-            if self.check(token_type) {
-                self.next();
-                return true;
+            var = Statement::Var {
+                identifier: identifier,
             }
         }
 
-        false
-    }
-
-    // Consume next token if the type match, otherwise error.
-    fn consume(&mut self, token_type: TokenType, msg: &str) -> Result<(), ()> {
-        if self.check(&token_type) {
-            self.next();
-            Ok(())
+        if self.advance_if_is(&TokenType::Newline) {
+            Ok(var)
         } else {
-            parser_error(self.peek(), msg);
+            parser_error(self.peek().line, EXPECT_NEWLINE.to_string());
             Err(())
         }
     }
 
-    fn synchronize(&mut self) {
-        // Skip token that raised error.
-        self.next();
-
-        while !self.is_eof() {
-            match self.peek().token_type {
-                Var | Const | Enum | Signal | Func | Coroutine | Struct | Class | Singleton
-                | Interface | Constructor | Destructor | Import | When | AtSign | Assert | Test
-                | Breakpoint => return,
-                _ => self.next(),
-            };
+    fn statement(&mut self) -> Result<Statement, ()> {
+        match self.peek().token_type {
+            TokenType::If => self.if_(),
+            TokenType::Print => self.print(),
+            TokenType::Indent(level) => self.block(level),
+            TokenType::Newline => self.empty_line(),
+            _ => self.expr(),
         }
     }
 
-    fn check(&self, token_type: &TokenType) -> bool {
-        !self.is_eof() && self.peek().token_type == *token_type
+    fn if_(&mut self) -> Result<Statement, ()> {
+        self.advance(); // Consume "if" token.
+
+        let condition: Expression = self.expression()?;
+
+        if !self.advance_if_is(&TokenType::Colon) {
+            parser_error(self.peek().line, EXPECT_COLON.to_string());
+            return Err(());
+        }
+
+        if !self.advance_if_is(&TokenType::Newline) {
+            parser_error(self.peek().line, EXPECT_NEWLINE.to_string());
+            return Err(());
+        }
+
+        let if_statement = self.statement()?;
+
+        if !self.advance_if_is(&INDENT) {
+            parser_error(self.peek().line, EXPECT_INDENT.to_string());
+            return Err(());
+        }
+
+        if !self.advance_if_is(&TokenType::Else) {
+            return Ok(Statement::If {
+                condition: Box::new(condition),
+                statement: Box::new(if_statement),
+            });
+        }
+
+        if !self.advance_if_is(&TokenType::Colon) {
+            parser_error(self.peek().line, EXPECT_COLON.to_string());
+            return Err(());
+        }
+
+        if !self.advance_if_is(&TokenType::Newline) {
+            parser_error(self.peek().line, EXPECT_NEWLINE.to_string());
+            return Err(());
+        }
+
+        Ok(Statement::IfElse {
+            condition: Box::new(condition),
+            if_statement: Box::new(if_statement),
+            else_statement: Box::new(self.statement()?),
+        })
     }
 
-    fn next(&mut self) -> &Token {
+    fn print(&mut self) -> Result<Statement, ()> {
+        self.advance(); // Consume "print" token.
+
+        let expr: Expression = self.expression()?;
+
+        if self.advance_if_is(&TokenType::Newline) {
+            Ok(Statement::Print {
+                expr: Box::new(expr),
+            })
+        } else {
+            parser_error(self.peek().line, EXPECT_NEWLINE.to_string());
+            Err(())
+        }
+    }
+
+    fn block(&mut self, level: u8) -> Result<Statement, ()> {
+        self.advance(); // Consume "tab" token.
+
+        let mut statements: Vec<Statement> = Vec::new();
+
+        while !self.is_eof() {
+            match self.peek().token_type {
+                TokenType::Indent(i) => {
+                    if i == level {
+                        self.advance(); // Consume "tab" token.
+                        continue; // Continue scope.
+                    } else if i < level {
+                        break; // Leave scope.
+                    }
+                }
+                _ => (),
+            }
+
+            match self.declaration() {
+                Ok(s) => statements.push(s),
+                _ => self.synchronize(),
+            }
+        }
+
+        Ok(Statement::Block {
+            stmts: statements,
+            level: level,
+        })
+    }
+
+    fn empty_line(&mut self) -> Result<Statement, ()> {
+        // Force synchronization to an useful line (or same line if there is still code in it).
+        Err(())
+    }
+
+    fn expr(&mut self) -> Result<Statement, ()> {
+        let expr: Expression = self.expression()?;
+
+        if self.advance_if_is(&TokenType::Newline) {
+            Ok(Statement::Expr {
+                expr: Box::new(expr),
+            })
+        } else {
+            parser_error(self.peek().line, EXPECT_NEWLINE.to_string());
+            Err(())
+        }
+    }
+
+    fn expression(&mut self) -> Result<Expression, ()> {
+        self.assignment()
+    }
+
+    fn assignment(&mut self) -> Result<Expression, ()> {
+        let mut expr: Expression = self.or()?;
+
+        if self.advance_if_is_any_of(&ASSIGNMENTS) {
+            let op: Token = self.previous().clone();
+            let right: Expression = self.assignment()?;
+
+            expr = match expr {
+                Expression::Variable { id } => Expression::Assignment {
+                    id: id,
+                    op: op,
+                    right: Box::new(right),
+                },
+                _ => {
+                    parser_error(op.line, invalid_var_on_assignment(&op.lexeme));
+                    return Err(());
+                }
+            }
+        }
+
+        Ok(expr)
+    }
+
+    fn or(&mut self) -> Result<Expression, ()> {
+        let mut expr: Expression = self.and()?;
+
+        if self.advance_if_is(&TokenType::Or) {
+            let op: Token = self.previous().clone();
+            let right: Expression = self.and()?;
+
+            expr = Expression::Logical {
+                left: Box::new(expr),
+                op: op,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    fn and(&mut self) -> Result<Expression, ()> {
+        let mut expr: Expression = self.equality()?;
+
+        if self.advance_if_is(&TokenType::And) {
+            let op: Token = self.previous().clone();
+            let right: Expression = self.equality()?;
+
+            expr = Expression::Logical {
+                left: Box::new(expr),
+                op: op,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    fn equality(&mut self) -> Result<Expression, ()> {
+        let mut expr: Expression = self.comparison()?;
+
+        while self.advance_if_is_any_of(&EQUALITIES) {
+            let op: Token = self.previous().clone();
+            let right: Expression = self.comparison()?;
+
+            expr = Expression::Binary {
+                left: Box::new(expr),
+                op: op,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    fn comparison(&mut self) -> Result<Expression, ()> {
+        let mut expr: Expression = self.term()?;
+
+        while self.advance_if_is_any_of(&COMPARASIONS) {
+            let op: Token = self.previous().clone();
+            let right: Expression = self.term()?;
+
+            expr = Expression::Binary {
+                left: Box::new(expr),
+                op: op,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    fn term(&mut self) -> Result<Expression, ()> {
+        let mut expr: Expression = self.factorization()?;
+
+        while self.advance_if_is_any_of(&TERMS) {
+            let op: Token = self.previous().clone();
+            let right: Expression = self.factorization()?;
+
+            expr = Expression::Binary {
+                left: Box::new(expr),
+                op: op,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    fn factorization(&mut self) -> Result<Expression, ()> {
+        let mut expr: Expression = self.unary()?;
+
+        while self.advance_if_is_any_of(&FACTORIZATIONS) {
+            let op: Token = self.previous().clone();
+            let right: Expression = self.unary()?;
+
+            expr = Expression::Binary {
+                left: Box::new(expr),
+                op: op,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    fn unary(&mut self) -> Result<Expression, ()> {
+        if self.advance_if_is_any_of(&UNARIES) {
+            let op: Token = self.previous().clone();
+            let mut right: Expression = self.unary()?;
+
+            right = Expression::Unary {
+                op: op,
+                right: Box::new(right),
+            };
+
+            Ok(right)
+        } else {
+            Ok(self.primary()?)
+        }
+    }
+
+    fn primary(&mut self) -> Result<Expression, ()> {
+        if self.advance_if_is_any_of(&LITERALS) {
+            let expr: Expression = Expression::Literal {
+                token: self.previous().clone(),
+            };
+
+            Ok(expr)
+        } else if self.advance_if_is(&IDENTIFIER) {
+            let expr: Expression = Expression::Variable {
+                id: self.previous().clone(),
+            };
+
+            Ok(expr)
+        } else if self.advance_if_is(&TokenType::ParenthesisOpen) {
+            let mut expr: Expression = self.expression()?;
+
+            expr = Expression::Grouping {
+                expr: Box::new(expr),
+            };
+
+            if self.advance_if_is(&TokenType::ParenthesisClose) {
+                Ok(expr)
+            } else {
+                parser_error(self.peek().line, EXPECT_CLOSE_PARENTHESIS.to_string());
+                Err(())
+            }
+        } else {
+            parser_error(self.peek().line, EXPECT_EXPRESSION.to_string());
+            Err(())
+        }
+    }
+
+    // Synchronize to a state that we expect everything to be okay.
+    // This is used after some syntax error in code.
+    fn synchronize(&mut self) {
+        self.advance(); // Skip token that raised error.
+
+        while !self.is_eof() {
+            if is_statement(&self.peek().token_type) {
+                break;
+            } else {
+                self.advance();
+            }
+        }
+    }
+
+    // Check if current token is the desired token.
+    fn is_token(&self, token_type: &TokenType) -> bool {
+        !self.is_eof() && discriminant(&self.peek().token_type) == discriminant(token_type)
+    }
+
+    // Check if reached EOF.
+    fn is_eof(&self) -> bool {
+        match self.peek().token_type {
+            TokenType::Eof => true,
+            _ => false,
+        }
+    }
+
+    // Return the current token and advance to next token.
+    fn advance(&mut self) -> &Token {
         if !self.is_eof() {
             self.current += 1
         };
         self.previous()
     }
 
-    fn is_eof(&self) -> bool {
-        self.peek().token_type == TokenType::Eof
+    // Advance if current token is the desired token, returns if it was.
+    fn advance_if_is(&mut self, token_type: &TokenType) -> bool {
+        if self.is_token(&token_type) {
+            self.advance();
+            true
+        } else {
+            false
+        }
     }
 
+    // Advance if current token is any of the tokens, returns if it was.
+    fn advance_if_is_any_of(&mut self, token_types: &[TokenType]) -> bool {
+        for token_type in token_types {
+            if self.advance_if_is(&token_type) {
+                return true;
+            }
+        }
+        false
+    }
+
+    // Get current token.
     fn peek(&self) -> &Token {
         self.tokens.get(self.current).unwrap()
     }
 
+    // Get previous token.
     fn previous(&self) -> &Token {
         self.tokens.get(self.current - 1).unwrap()
     }

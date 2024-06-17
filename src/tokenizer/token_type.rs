@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
     // Assignment
     Equal,
@@ -22,6 +22,9 @@ pub enum TokenType {
     GreaterGreater,
     LessLess,
 
+    // Comment
+    Comment(String),
+
     // Comparassion
     Greater,
     Less,
@@ -42,21 +45,21 @@ pub enum TokenType {
     Await,
     Yield,
     Resume,
+    Where,
 
     // Control Flow Modifier
     Else,
     Break,
     Continue,
 
-    // Definition
+    // Declaration
     Var,
     Const,
     Enum,
     Signal,
     Func,
-    Coroutine,
+    Coro,
     Struct,
-    Union,
     Class,
     Singleton,
     Interface,
@@ -67,7 +70,7 @@ pub enum TokenType {
     Import,
     As,
 
-    // Definition Modifier
+    // Declaration Modifier
     Static,
     Public,
     Extends,
@@ -80,12 +83,11 @@ pub enum TokenType {
     AtSign,
 
     // Literal
-    True,
-    False,
-    Integer,
-    Floating,
-    Character,
-    String_, // Escape conflict with String
+    Boolean(bool),
+    Integer(i32),
+    Floating(f32),
+    Character(char),
+    String_(String), // Escape conflict with String
     Null,
 
     // Logical
@@ -105,7 +107,6 @@ pub enum TokenType {
     Self_, // Escape conflict with Self
     Super,
     Is,
-    To,
 
     // Open Close
     ParenthesisOpen,
@@ -117,12 +118,14 @@ pub enum TokenType {
 
     // Scope
     Newline,
-    Indent,
+    Indent(u8),
+    Colon,
 
     // Test
     Breakpoint,
     Assert,
     Test,
+    Print,
 
     // Type
     Bool,
@@ -130,53 +133,23 @@ pub enum TokenType {
     Float,
     Char,
     Str,
+    Void,
 
-    // TODO: Classify
-    Where,
+    // Typecasting
+    To,
+
+    // SPECIAL
+    Identifier(String),
+    Eof,
+
+    // RESERVED
     With,
-    Comment,
     Dollar,
     Period,
     Comma,
-    Colon,
     Semicolon,
     Underscore,
     QuestionMark,
     PeriodPeriod,
     ForwardArrow,
-
-    // Special
-    Identifier, // Name of variables, classes, functions, etc
-    Eof,
-}
-
-#[derive(Debug, Clone)]
-pub enum Content {
-    Boolean(bool),
-    Integer(i32),
-    Floating(f32),
-    Character(char),
-    String(String),
-    Null,
-}
-
-#[derive(Debug, Clone)]
-pub struct Token {
-    pub token_type: TokenType,
-    pub lexeme: String,
-    pub content: Content,
-    pub line: usize,
-}
-
-impl Content {
-    pub fn to_string(&self) -> String {
-        match &self {
-            Content::Boolean(v) => v.to_string(),
-            Content::Integer(v) => v.to_string(),
-            Content::Floating(v) => v.to_string(),
-            Content::Character(v) => v.to_string(),
-            Content::String(v) => v.clone(),
-            Content::Null => "null".to_string(),
-        }
-    }
 }

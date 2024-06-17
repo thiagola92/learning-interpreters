@@ -1,0 +1,10 @@
+print "------"
+if true:
+	print "yes"
+	print "yes"
+	print "yes"
+else:
+	print "no"
+	print "no"
+	print "no"
+	print "no"
